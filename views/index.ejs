@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primera Pagina</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!--
+    <%= Title%>
+    <%if(showMessage){%>
+        <%=message%>
+    <%}else {%>
+        ese es un mensaje por defecto
+    <%}%>
+
+    <ul>
+        <%for (let i = 0; i < items.length; i++) {%>
+            <li><%=items[i]%></li>
+        <%}%>
+    </ul>-->
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+          <h1>Bienvenido a la página</h1>
+        </div>
+      </div>
+    
+      <main class="container">
+        <div class="message-container">
+          <% if (showMessage) { %>
+            <div class="message message-dynamic"><%= message %></div>
+          <% } else { %>
+            <div class="message message-default">Ese es un mensaje por defecto</div>
+          <% } %>
+        </div>
+    
+        <div class="items-container">
+          <h2 class="items-title">Nuestros Items</h2>
+          <ul class="items-list">
+            <% for (let i = 0; i < items.length; i++) { %>
+              <li class="item-card"><%= items[i] %></li>
+            <% } %>
+          </ul>
+        </div>
+      </main>
+</body>
+</html>
