@@ -4,6 +4,7 @@ const userRouter = require('./routers/userRouters');
 const morgan = require('morgan'); // Middleware para registrar las peticiones HTTP en la consola
 const userLogin = require('./middlewares/userLogin'); // Middleware para verificar el login del usuario
 const path = require('path'); // Módulo para trabajar con rutas de archivos y directorios
+const connection = require('./database/connection'); // Conexión a la base de datos MongoDB
 
 app.use(morgan('dev')); // Usar morgan para registrar las peticiones en la consola
 app.use(express.json()); // Middleware para parsear el cuerpo de las peticiones en formato JSON
