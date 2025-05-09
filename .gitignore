@@ -1,1 +1,27 @@
 node_modules/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Entornos locales
+.env
+.env.*
+
+# Directorios de producción de build
+dist/
+build/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+
+# Testing
+coverage/ 
+
+# Paquetes de desarrollo
+.pnpm-store/ 

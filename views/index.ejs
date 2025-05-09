@@ -6,44 +6,68 @@
     <title>Primera Pagina</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <!--
-    <%= Title%>
-    <%if(showMessage){%>
-        <%=message%>
-    <%}else {%>
-        ese es un mensaje por defecto
-    <%}%>
-
-    <ul>
-        <%for (let i = 0; i < items.length; i++) {%>
-            <li><%=items[i]%></li>
-        <%}%>
-    </ul>-->
 </head>
 <body>
-    <div class="header">
-        <div class="container">
-          <h1>Bienvenido a la página</h1>
-        </div>
-      </div>
+  <h1 class="title">Mi Primer CHAT</h1>
+  <div id="chat">
+    <input type="text" id="username" placeholder="Nombre de usuario">
+    <div id="messages">
+      <div class="message">MatiasBarco: Hola</div>
+      <div class="message">MatiasBarco: Hola!!!</div>
+    </div>
+
+    <div id="writing">
+      
+    </div>
+
+    <textarea name="" id="writemessage" placeholder="Mensaje"></textarea>
+  </div>
+  
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
     
-      <main class="container">
-        <div class="message-container">
-          <% if (showMessage) { %>
-            <div class="message message-dynamic"><%= message %></div>
-          <% } else { %>
-            <div class="message message-default">Ese es un mensaje por defecto</div>
-          <% } %>
-        </div>
-    
-        <div class="items-container">
-          <h2 class="items-title">Nuestros Items</h2>
-          <ul class="items-list">
-            <% for (let i = 0; i < items.length; i++) { %>
-              <li class="item-card"><%= items[i] %></li>
-            <% } %>
-          </ul>
-        </div>
-      </main>
+    const username = document.getElementById('username');
+    const writemessage = document.getElementById('writemessage');
+    const writing = document.getElementById('writing');
+    const messages = document.getElementById('messages');
+
+    socket.on('all-messages', (m) => {
+      let content = '';
+      for (const message of m) {
+        content += `<div class="message">${message.username}: ${message.message}</div><br>`;
+      }
+      
+      messages.innerHTML = content;
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    writemessage.addEventListener('keydown', (event) => {
+      socket.emit('writing',  username.value);
+    });
+
+    socket.on('writing', (username) => {
+      writing.innerHTML = `${username} está escribiendo...`;
+      setTimeout(() => {
+        writing.innerHTML = '';
+      }, 3000);
+    });
+
+    writemessage.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') {
+        if (username.value == "" || writemessage.value == "") {
+            return alert('Por favor, ingrese un nombre de usuario y un mensaje.');
+        };
+        
+        socket.emit('new-message', {
+          username: username.value,
+          message: writemessage.value.slice(0, -1)
+        });
+
+        writemessage.value = '';
+      }
+    });
+  </script>  
 </body>
 </html>
