@@ -17,3 +17,12 @@ build/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+
+# IDE
+.vscode/
+
+# Testing
+coverage/ 
+
+# Paquetes de desarrollo
+.pnpm-store/ 
