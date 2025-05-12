@@ -1,37 +1,22 @@
 const express = require('express');
 const mongoose = require('mongoose');
-const cookieParser = require('cookie-parser');
-const path = require('path');
-const userRouter = require('./routers/userRouter');
+const dotenv = require('dotenv');
+const cors = require('cors');
 
-const authRouter = require('./routers/authRouter');
-const verificarToken = require('./middlewares/authMiddleware');
-
+dotenv.config();
 const app = express();
-const PORT = 3000;
 
-//configuracion
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, 'views'));
-app.use(express.urlencoded({ extended: true }));
+app.use(cors());
 app.use(express.json());
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public/css')));
 
-//rutas
-app.use('/', authRouter);
-app.use('/user', userRouter);
+const userRoutes = require('./routers/userRouter');
+app.use('/api/users', userRoutes);
 
-//ruta del dashboard
-app.get('/dashboard', verificarToken, (req, res) => {
-    res.send(`
-    <h2>Bienvenido, ${req.usuario.nombre} (${req.usuario.rol})</h2>
-    <p>Acceso autorizado al panel legal.</p>
-    <a href="/logout">Cerrar sesión</a>
-    `);
-});
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('Conectado a MongoDB'))
+    .catch(err => console.error('Error de conexión:', err));
 
-//iniciar servidor
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`Servidor corriendo en http://localhost:${PORT}`);
-})
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+});
