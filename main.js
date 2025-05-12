@@ -2,8 +2,10 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
 const path = require('path');
+const userRouter = require('./routers/userRouter');
 
 const authRouter = require('./routers/authRouter');
+const verificarToken = require('./middlewares/authMiddleware');
 
 const app = express();
 const PORT = 3000;
@@ -18,10 +20,15 @@ app.use(express.static(path.join(__dirname, 'public/css')));
 
 //rutas
 app.use('/', authRouter);
+app.use('/user', userRouter);
 
-//temporal: ruta del dashboard
-app.get('/dashboard', (req, res) => {
-    res.send('<h2>Bienvenido al sistema legal. Panel en construcción.</h2><a href="/logout">Cerrar sesión</a>');
+//ruta del dashboard
+app.get('/dashboard', verificarToken, (req, res) => {
+    res.send(`
+    <h2>Bienvenido, ${req.usuario.nombre} (${req.usuario.rol})</h2>
+    <p>Acceso autorizado al panel legal.</p>
+    <a href="/logout">Cerrar sesión</a>
+    `);
 });
 
 //iniciar servidor

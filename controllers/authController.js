@@ -1,4 +1,4 @@
-const Persona = require('../models/personaModel');
+const Persona = require('../models/userModel');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { jwtSecret, jwtExpiresIn } = require('../config');
