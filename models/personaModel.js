@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const personaSchema = new mongoose.Schema({
   nombre: String,
@@ -9,12 +9,10 @@ const personaSchema = new mongoose.Schema({
   direccion: String,
   usuario: { type: String, unique: true },
   contrasena: String,
-  rol: { type: String, enum: ["cliente", "abogado", "juez"], required: true },
-  estado: String, // solo para abogado y juez
-  especialidad: String, // abogado y juez
-  colegiatura: String, // abogado y juez
-  tipoDocumento: String, // solo cliente
-  fechaRegistro: Date, // solo cliente
+  rol: { type: String, enum: ['cliente', 'juez', 'abogado'], required: true }
+}, {
+  discriminatorKey: 'rol',
+  timestamps: true
 });
 
-module.exports = mongoose.model("Persona", personaSchema);
+module.exports = mongoose.model('Persona', personaSchema);
