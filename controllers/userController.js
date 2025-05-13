@@ -3,24 +3,66 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
-    try {
-        const { nombre, apellido, dni, email, telefono, direccion, usuario, contrasena, documentoIdentidad } = req.body;
+    function capitalizar(texto) {
+    return texto
+        .toLowerCase()
+        .split(' ')
+        .map(palabra => palabra.charAt(0).toUpperCase() + palabra.slice(1))
+        .join(' ');
+    }
 
-        const existingUser = await User.findOne({ usuario });
+    try {
+        const { nombre, apellido, dni, email, telefono, direccion, contrasena, confirmContrasena } = req.body;
+
+        // Validaciones
+        const soloLetrasRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
+        const soloNumerosRegex = /^[0-9]+$/;
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        const contrasenaRegex = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
+
+        if (!soloLetrasRegex.test(nombre)) {
+            return res.status(400).json({ message: 'El nombre solo debe contener letras' });
+        }
+
+        if (!soloLetrasRegex.test(apellido)) {
+        return res.status(400).json({ message: 'El apellido solo debe contener letras' });
+        }
+
+        if (!soloNumerosRegex.test(dni) || dni.length !== 8) {
+        return res.status(400).json({ message: 'El DNI debe contener solo 8 números' });
+        }
+
+        if (!soloNumerosRegex.test(telefono)) {
+        return res.status(400).json({ message: 'El teléfono solo debe contener números' });
+        }
+
+        if (!emailRegex.test(email)) {
+        return res.status(400).json({ message: 'Correo inválido' });
+        }
+
+        if (!contrasenaRegex.test(contrasena)) {
+        return res.status(400).json({
+            message: 'La contraseña debe tener al menos 6 caracteres, una letra mayúscula y un número'
+        });
+        }
+
+        if (contrasena !== confirmContrasena) {
+            return res.status(400).json({ message: 'Las contraseñas no coinciden' });
+        }
+
+        const existingUser = await User.findOne({ email });
         if (existingUser) return res.status(400).json({ message: 'El usuario ya existe' });
 
         const hashedPassword = await bcrypt.hash(contrasena, 10);
 
         const newUser = new User({
-            nombre,
-            apellido,
+            nombre: capitalizar(nombre),
+            apellido: capitalizar(apellido),
             dni,
             email,
             telefono,
-            direccion,
-            usuario,
+            direccion: capitalizar(direccion),
             contrasena: hashedPassword,
-            documentoIdentidad,
             rol: 'cliente'
         });
 
@@ -32,10 +74,10 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-      try {
-        const { usuario, contrasena } = req.body;
+    try {
+        const { email, contrasena } = req.body;
 
-        const user = await User.findOne({ usuario });
+        const user = await User.findOne({ email });
         if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
         const isMatch = await bcrypt.compare(contrasena, user.contrasena);

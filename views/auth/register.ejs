@@ -1,0 +1,77 @@
+<!-- views/auth/register.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Registro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- En register.ejs -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/register.css">
+</head>
+<body>
+    <h2>Registro de Usuario</h2>
+    <form id="registerForm">
+        <input type="text" placeholder="Nombre" name="nombre" required />
+        <input type="text" placeholder="Apellido" name="apellido" required />
+        <input type="text" placeholder="DNI" name="dni" required />
+        <input type="email" placeholder="Correo" name="email" required />
+        <input type="text" placeholder="Teléfono" name="telefono" required />
+        <input type="text" placeholder="Dirección" name="direccion" required />
+        <div class="campo-password">
+            <input type="password" id="contrasena" name="contrasena" placeholder="Contraseña" required />
+            <button type="button" id="toggleContrasena" class="btn-toggle">Mostrar</button>
+        </div>
+
+        <div class="campo-password">
+            <input type="password" id="confirmContrasena" name="confirmContrasena" placeholder="Confirmar Contraseña" required />
+            <button type="button" id="toggleConfirm" class="btn-toggle">Mostrar</button>
+        </div>
+
+        <button type="submit">Registrarse</button>
+    </form>
+
+    <script>
+        document.getElementById('registerForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {};
+        for (const [key, value] of formData.entries()) data[key] = value;
+
+        const response = await fetch('/api/users/registro', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert("Registro exitoso. Ahora inicia sesión.");
+            window.location.href = '/auth/login';
+        } else {
+            alert(result.message || 'Error en el registro');
+        }
+        });
+
+        const toggleContrasena = document.getElementById('toggleContrasena');
+        const inputContrasena = document.getElementById('contrasena');
+
+        toggleContrasena.addEventListener('click', () => {
+            const tipo = inputContrasena.type === 'password' ? 'text' : 'password';
+            inputContrasena.type = tipo;
+            toggleContrasena.textContent = tipo === 'password' ? 'Mostrar' : 'Ocultar';
+        });
+
+        const toggleConfirm = document.getElementById('toggleConfirm');
+        const inputConfirm = document.getElementById('confirmContrasena');
+
+        toggleConfirm.addEventListener('click', () => {
+            const tipo = inputConfirm.type === 'password' ? 'text' : 'password';
+            inputConfirm.type = tipo;
+            toggleConfirm.textContent = tipo === 'password' ? 'Mostrar' : 'Ocultar';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!-- views/auth/login.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <title>Iniciar Sesión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- En login.ejs -->
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/login.css">
+</head>
+<body>
+    <h2>Iniciar Sesión</h2>
+    <form id="loginForm">
+        <input type="text" placeholder="Email" name="email" required />
+        <input type="password" placeholder="Contraseña" name="contrasena" required />
+        <button type="submit">Ingresar</button>
+    </form>
+
+    <p>¿No tienes cuenta? <a href="/auth/register">Regístrate aquí</a></p>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const formData = new FormData(this);
+        const data = {
+            email: formData.get('email'),
+            contrasena: formData.get('contrasena')
+        };
+
+        const response = await fetch('/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert("Login exitoso, bienvenido " + result.usuario);
+            localStorage.setItem('token', result.token); // Guardamos el token
+            // Redirigir según rol (cliente, abogado, juez)
+            if (result.rol === 'juez') window.location.href = '/juez/dashboard';
+            else if (result.rol === 'abogado') window.location.href = '/abogado/dashboard';
+            else window.location.href = '/cliente/dashboard';
+        } else {
+            alert(result.message || 'Credenciales inválidas');
+        }
+        });
+    </script>
+</body>
+</html>
