@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+const jwt = require('jsonwebtoken'); // Importar JWT
 const userRoutes = require('./routers/userRouter');
 const casoRoutes = require('./routers/casoRoutes');
 const cors = require('cors');
@@ -8,6 +9,8 @@ const path = require('path');
 const cookieParser = require('cookie-parser');
 const { verifyViewToken, viewAllowRoles } = require('./middlewares/viewAuthMiddleware');
 const multer = require('multer');
+const http = require('http');
+const socketIo = require('socket.io');
 
 dotenv.config();
 
@@ -48,7 +51,15 @@ app.use('/api/casos', casoRoutes);
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
     console.log('Conectado a MongoDB');
-    app.listen(PORT, () => {
+    
+    // Crear servidor HTTP y configurar Socket.io
+    const server = http.createServer(app);
+    const io = socketIo(server);
+    
+    // Configurar Socket.io
+    require('./socket')(io);
+    
+    server.listen(PORT, () => {
         console.log(`Servidor escuchando en http://localhost:${PORT}`);
     });
 })
@@ -62,7 +73,9 @@ app.get('/auth/login', (req, res) => {
 });
 
 app.get('/', (req, res) => {
-    res.render('index');
+    // Simplemente mostrar la página de inicio sin redireccionamiento
+    console.log('Ruta raíz solicitada - Mostrando página de inicio sin redirecciones');
+    return res.render('index');
 });
 
 app.get('/auth/register', (req, res) => {
@@ -76,6 +89,10 @@ app.get('/cliente/dashboard', verifyViewToken, viewAllowRoles('cliente'), (req, 
 
 app.get('/cliente/crearCaso', verifyViewToken, viewAllowRoles('cliente'), (req, res) => {
     res.render('cliente/crearCaso', { user: req.user });
+});
+
+app.get('/chat', (req, res) => {
+    res.render('cliente/chatBot');
 });
 
 app.get('/abogado/dashboard', verifyViewToken, viewAllowRoles('abogado'), (req, res) => {

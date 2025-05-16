@@ -101,7 +101,6 @@ casoSchema.pre('save', function(next) {
 
 // Índices para mejorar el rendimiento de las consultas
 casoSchema.index({ clienteId: 1, fechaRegistro: -1 });
-casoSchema.index({ numeroExpediente: 1 });
 casoSchema.index({ estado: 1 });
 
 module.exports = mongoose.model('Caso', casoSchema);

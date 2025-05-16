@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/dashboardCliente.css" />
+    <link rel="stylesheet" href="/css/floatingChat.css" />
     <style>
         /* Estilos adicionales para el dashboard del cliente */
         .user-info {
@@ -560,7 +561,32 @@
             verificarSesion();
             mostrarFechaActual();
             cargarCasos();
+            
+            // Función para marcar el enlace activo en el menú lateral
+            function marcarEnlaceActivo() {
+                // Obtener la ruta actual
+                const rutaActual = window.location.pathname;
+                
+                // Eliminar la clase 'active' de todos los enlaces
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    enlace.classList.remove('active');
+                });
+                
+                // Añadir la clase 'active' al enlace correspondiente a la ruta actual
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    if (enlace.getAttribute('href') === rutaActual) {
+                        enlace.classList.add('active');
+                    }
+                });
+            }
+            
+            // Ejecutar la función al cargar la página
+            marcarEnlaceActivo();
         });
     </script>
+    
+    <!-- Scripts para el chat flotante -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/floatingChat.js"></script>
 </body>
 </html>

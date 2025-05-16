@@ -55,12 +55,12 @@
             </div>
             
             <ul class="sidebar-menu">
-                <li><a href="#" class="active"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="#"><i class="fas fa-balance-scale"></i> Casos Judiciales</a></li>
-                <li><a href="#"><i class="fas fa-gavel"></i> Audiencias</a></li>
-                <li><a href="#"><i class="fas fa-file-contract"></i> Resoluciones</a></li>
-                <li><a href="#"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
-                <li><a href="#"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
+                <li><a href="/juez/dashboard" class="active"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="/juez/casos" id="casos-link"><i class="fas fa-balance-scale"></i> Casos Judiciales</a></li>
+                <li><a href="/juez/audiencias" id="audiencias-link"><i class="fas fa-gavel"></i> Audiencias</a></li>
+                <li><a href="/juez/resoluciones" id="resoluciones-link"><i class="fas fa-file-contract"></i> Resoluciones</a></li>
+                <li><a href="/juez/calendario" id="calendario-link"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                <li><a href="/juez/estadisticas" id="estadisticas-link"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
             </ul>
             
             <div class="user-info">
@@ -273,7 +273,26 @@
         });
         
         document.addEventListener('DOMContentLoaded', function () {
-            // Aquí podrías agregar cualquier inicialización adicional para el dashboard de juez
+            // Función para marcar el enlace activo en el menú lateral
+            function marcarEnlaceActivo() {
+                // Obtener la ruta actual
+                const rutaActual = window.location.pathname;
+                
+                // Eliminar la clase 'active' de todos los enlaces
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    enlace.classList.remove('active');
+                });
+                
+                // Añadir la clase 'active' al enlace correspondiente a la ruta actual
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    if (enlace.getAttribute('href') === rutaActual) {
+                        enlace.classList.add('active');
+                    }
+                });
+            }
+            
+            // Ejecutar la función al cargar la página
+            marcarEnlaceActivo();
         });
     </script>
 </body>

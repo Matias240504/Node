@@ -1,0 +1,116 @@
+/* Estilo para el título */
+.title {
+    text-align: center;
+    font-size: 2.4rem;
+    color: #4361ee;
+    margin: 1.5rem 0;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    position: relative;
+    padding-bottom: 1rem;
+  }
+  
+  .title::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: #f72585;
+    border-radius: 2px;
+  }
+  
+  /* Contenedor principal del chat */
+  #chat {
+    width: 100%;
+    max-width: 500px;
+    margin: 2rem auto;
+    border: 1px solid #e0e0e0;
+    border-radius: 12px;
+    overflow: hidden;
+    font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+  
+  /* Input de usuario */
+  #username {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    outline: none;
+  }
+  
+  #username:focus {
+    background-color: #f9f9f9;
+  }
+  
+  /* Área de mensajes */
+  #messages {
+    height: 400px;
+    overflow-y: auto;
+    padding: 15px;
+    background-color: #fafafa;
+  }
+  
+  /* Estilo de mensajes */
+  .message {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 18px;
+    margin-bottom: 10px;
+    display: inline-block;
+    max-width: 80%;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    font-size: 14px;
+    line-height: 1.4;
+  }
+  
+  /* Área de escritura */
+  #writing {
+    border-top: 1px solid #eee;
+    background: white;
+  }
+  
+  #writemessage {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+  }
+  
+  /* Scrollbar personalizada */
+  #messages::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  #messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+  
+  #messages::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 3px;
+  }
+  
+  /* Efectos básicos */
+  #writemessage:focus {
+    background-color: #f9f9f9;
+  }
+  
+  .message:nth-child(odd) {
+    background-color: #4361ee;
+    color: white;
+    border-radius: 18px 18px 18px 4px;
+  }
+  
+  .message:nth-child(even) {
+    background-color: #f0f0f0;
+    border-radius: 18px 18px 4px 18px;
+  }

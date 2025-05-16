@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/dashboardCliente.css" />
     <link rel="stylesheet" href="/css/crearCaso.css" />
+    <link rel="stylesheet" href="/css/floatingChat.css" />
 </head>
 <body>
     <div class="dashboard-container">
@@ -17,12 +18,12 @@
             <div class="sidebar-header">
                 <h1>Sistema Legal</h1>
             </div>
-            
+
             <ul class="sidebar-menu">
                 <li><a href="/cliente/dashboard"><i class="fas fa-home"></i> Inicio</a></li>
                 <li><a href="/cliente/crearCaso" class="active"><i class="fas fa-plus-circle"></i> Crear Caso</a></li>
             </ul>
-            
+
             <div class="user-info">
                 <div class="user-avatar">
                     <i class="fas fa-user"></i>
@@ -102,6 +103,8 @@
         </div>
     </div>
     
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/js/floatingChat.js"></script>
     <script>
         // Gestión de sesión y token
         function verificarSesion() {
@@ -315,14 +318,50 @@
             localStorage.removeItem('token');
             localStorage.removeItem('userData');
             document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict';
             
             // Redireccionar a la página de login
             window.location.href = '/auth/login';
         });
         
-        // Inicializar
-        verificarSesion();
-        mostrarFechaActual();
+        // Mostrar fecha actual
+        function mostrarFechaActual() {
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const fecha = new Date().toLocaleDateString('es-ES', opciones);
+            document.getElementById('currentDate').textContent = capitalizar(fecha);
+        }
+        
+        // Función para capitalizar texto
+        function capitalizar(texto) {
+            return texto.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            // Inicializar
+            verificarSesion();
+            mostrarFechaActual();
+            
+            // Función para marcar el enlace activo en el menú lateral
+            function marcarEnlaceActivo() {
+                // Obtener la ruta actual
+                const rutaActual = window.location.pathname;
+                
+                // Eliminar la clase 'active' de todos los enlaces
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    enlace.classList.remove('active');
+                });
+                
+                // Añadir la clase 'active' al enlace correspondiente a la ruta actual
+                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                    if (enlace.getAttribute('href') === rutaActual) {
+                        enlace.classList.add('active');
+                    }
+                });
+            }
+            
+            // Ejecutar la función al cargar la página
+            marcarEnlaceActivo();
+        });
     </script>
 </body>
 </html>

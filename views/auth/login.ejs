@@ -85,13 +85,20 @@
             // Guardamos el token de forma segura
             localStorage.setItem('token', result.token);
             
-            // Guardamos información básica del usuario
-            localStorage.setItem('userName', result.usuario);
-            localStorage.setItem('userRole', result.rol);
-            localStorage.setItem('userId', result.userId);
+            // Guardamos toda la información del usuario en un solo objeto
+            const userData = {
+                id: result.userId,
+                nombre: result.usuario,
+                rol: result.rol,
+                email: result.email
+            };
+            localStorage.setItem('userData', JSON.stringify(userData));
             
             // Crear una cookie con el token (expira en 24 horas)
-            document.cookie = `token=${result.token}; path=/; max-age=86400; secure; samesite=strict`;
+            document.cookie = `token=${result.token}; path=/; max-age=86400`;
+            
+            console.log('Login exitoso - Token guardado:', result.token);
+            console.log('Datos de usuario guardados:', userData);
             
             alert("Login exitoso, bienvenido " + result.usuario);
             

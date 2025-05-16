@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Primera Pagina</title>
+    <link rel="stylesheet" href="/css/chatBot.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1 class="title">Mi Primer CHAT</h1>
+  <div id="chat">
+    <input type="text" id="username" placeholder="Nombre de usuario">
+    <div id="messages">
+      <div class="message">MatiasBarco: Hola</div>
+      <div class="message">MatiasBarco: Hola!!!</div>
+    </div>
+
+    <div id="writing">
+      
+    </div>
+
+    <textarea name="" id="writemessage" placeholder="Mensaje"></textarea>
+  </div>
+  
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    
+    const username = document.getElementById('username');
+    const writemessage = document.getElementById('writemessage');
+    const writing = document.getElementById('writing');
+    const messages = document.getElementById('messages');
+
+    socket.on('all-messages', (m) => {
+      let content = '';
+      for (const message of m) {
+        content += `<div class="message">${message.username}: ${message.message}</div><br>`;
+      }
+      
+      messages.innerHTML = content;
+      messages.scrollTop = messages.scrollHeight;
+    });
+
+    writemessage.addEventListener('keydown', (event) => {
+      socket.emit('writing',  username.value);
+    });
+
+    socket.on('writing', (username) => {
+      writing.innerHTML = `${username} está escribiendo...`;
+      setTimeout(() => {
+        writing.innerHTML = '';
+      }, 3000);
+    });
+
+    writemessage.addEventListener('keyup', (event) => {
+      if (event.key === 'Enter') {
+        if (username.value == "" || writemessage.value == "") {
+            return alert('Por favor, ingrese un nombre de usuario y un mensaje.');
+        };
+        
+        socket.emit('new-message', {
+          username: username.value,
+          message: writemessage.value.slice(0, -1)
+        });
+
+        writemessage.value = '';
+      }
+    });
+  </script>  
+</body>
+</html>
