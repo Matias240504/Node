@@ -9,18 +9,62 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/login.css">
+    <style>
+        /* Estilos para el campo de contraseña con botón */
+        .campo-password {
+            position: relative;
+            width: 100%;
+        }
+        
+        .campo-password input {
+            width: 100%;
+            padding-right: 80px; /* Espacio para el botón */
+        }
+        
+        .btn-toggle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            height: 100%;
+            background: none;
+            border: none;
+            border-left: 1px solid #ddd;
+            padding: 0 15px;
+            cursor: pointer;
+            color: var(--secondary-color);
+            font-weight: 500;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-toggle:hover {
+            background-color: rgba(52, 152, 219, 0.1);
+        }
+    </style>
 </head>
 <body>
     <h2>Iniciar Sesión</h2>
     <form id="loginForm">
         <input type="text" placeholder="Email" name="email" required />
-        <input type="password" placeholder="Contraseña" name="contrasena" required />
+        <div class="campo-password">
+            <input type="password" id="contrasena" placeholder="Contraseña" name="contrasena" required />
+            <button type="button" id="toggleContrasena" class="btn-toggle">Mostrar</button>
+        </div>
         <button type="submit">Ingresar</button>
     </form>
 
     <p>¿No tienes cuenta? <a href="/auth/register">Regístrate aquí</a></p>
 
     <script>
+        // Toggle para mostrar/ocultar contraseña
+        const toggleContrasena = document.getElementById('toggleContrasena');
+        const inputContrasena = document.getElementById('contrasena');
+        
+        toggleContrasena.addEventListener('click', () => {
+            const tipo = inputContrasena.type === 'password' ? 'text' : 'password';
+            inputContrasena.type = tipo;
+            toggleContrasena.textContent = tipo === 'password' ? 'Mostrar' : 'Ocultar';
+        });
+        
         document.getElementById('loginForm').addEventListener('submit', async function (e) {
         e.preventDefault();
 

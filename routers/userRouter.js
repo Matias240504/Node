@@ -19,4 +19,11 @@ router.get('/dashboard', verifyToken, allowRoles('cliente', 'abogado'), (req, re
     res.json({ message: `Hola ${req.user.usuario}, este es tu dashboard` });
 });
 
+// Ruta para obtener información del usuario autenticado
+router.get('/me', verifyToken, (req, res) => {
+    // Excluir la contraseña y otros datos sensibles
+    const { contrasena, __v, ...userData } = req.user.toObject();
+    res.json({ user: userData });
+});
+
 module.exports = router;

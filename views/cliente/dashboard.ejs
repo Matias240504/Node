@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sistema Legal - Página Principal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/dashboardCliente.css" />
+    <style>
+        /* Estilos adicionales para el dashboard del cliente */
+        .user-info {
+            margin-top: auto;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--spacing-sm);
+        }
+
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .logout-btn:hover {
+            color: white;
+        }
+        
+        /* Estilos adicionales específicos para esta página */
+        .logout-btn {
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .logout-btn:hover {
+            color: white;
+        }
+        
+        /* Estilos para la tabla de casos */
+        .loading-row td {
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(52, 152, 219, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--secondary-color);
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 10px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: var(--danger-color);
+            padding: 20px;
+        }
+        
+        .error-message i {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+        
+        .no-data-message {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px;
+            background-color: #f8f9fa;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            text-align: center;
+        }
+        
+        .no-data-message i {
+            font-size: 48px;
+            color: #adb5bd;
+            margin-bottom: 15px;
+        }
+        
+        .no-data-message p {
+            color: #6c757d;
+            margin-bottom: 20px;
+        }
+        
+        .btn-create-case {
+            display: inline-block;
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: var(--border-radius);
+            text-decoration: none;
+            transition: background-color 0.3s;
+        }
+        
+        .btn-create-case:hover {
+            background-color: var(--accent-color);
+        }
+        
+        /* Estilos para los estados de los casos */
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .status-active {
+            background-color: rgba(52, 152, 219, 0.15);
+            color: var(--secondary-color);
+        }
+        
+        .status-pending {
+            background-color: rgba(243, 156, 18, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .status-closed {
+            background-color: rgba(46, 204, 113, 0.15);
+            color: var(--success-color);
+        }
+        
+        .status-rejected {
+            background-color: rgba(231, 76, 60, 0.15);
+            color: var(--danger-color);
+        }
+        
+        #refreshCasesBtn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        #refreshCasesBtn i {
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sistema Legal</h1>
+            </div>
+
+            <ul class="sidebar-menu">
+                <li><a href="/cliente/dashboard" class="active"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="/cliente/crearCaso"><i class="fas fa-plus-circle"></i> Crear Caso</a></li>
+            </ul>
+
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div id="userName"><%= user.nombre %></div>
+                    <small id="userRole">Cliente</small>
+                </div>
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Dashboard de Cliente</h2>
+                <div>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="cards-container">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Casos Activos</h3>
+                        <div class="card-icon" style="background-color: var(--secondary-color);">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">0</div>
+                    <div class="card-description">En proceso o aceptados</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Casos Pendientes</h3>
+                        <div class="card-icon" style="background-color: var(--warning-color);">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">0</div>
+                    <div class="card-description">En espera de revisión</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Total de Casos</h3>
+                        <div class="card-icon" style="background-color: var(--success-color);">
+                            <i class="fas fa-folder"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">0</div>
+                    <div class="card-description">Todos sus casos</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Casos Finalizados</h3>
+                        <div class="card-icon" style="background-color: var(--dark-color);">
+                            <i class="fas fa-check-circle"></i>
+                        </div>
+                    </div>
+                    <div class="card-value">0</div>
+                    <div class="card-description">Procesos completados</div>
+                </div>
+            </div>
+
+            <!-- Recent Cases -->
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Mis Casos</h3>
+                    <button id="refreshCasesBtn"><i class="fas fa-sync-alt"></i> Actualizar</button>
+                </div>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Expediente</th>
+                                <th>Título</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Abogado</th>
+                            </tr>
+                        </thead>
+                        <tbody id="casosTbody">
+                            <!-- Los casos se cargarán dinámicamente -->
+                            <tr class="loading-row">
+                                <td colspan="6" class="text-center">
+                                    <div class="loading-spinner"></div>
+                                    <p>Cargando casos...</p>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div id="noCasesMessage" class="no-data-message" style="display: none;">
+                    <i class="fas fa-folder-open"></i>
+                    <p>No tienes casos registrados aún.</p>
+                    <a href="/cliente/crearCaso" class="btn-create-case">Crear un nuevo caso</a>
+                </div>
+                </div>
+            </div>
+
+            <!-- Aquí se eliminó completamente la sección "Calendario y Próximos Eventos" -->
+        </div>
+    </div>
+
+    <script>
+        // Gestión de sesión y token
+        function verificarSesion() {
+            const token = localStorage.getItem('token') || getCookie('token');
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            
+            if (!token) {
+                // Si no hay token, redirigir al login
+                window.location.href = '/auth/login';
+                return false;
+            }
+            
+            // Si hay token pero no hay datos de usuario en localStorage, intentar recuperarlos
+            if (token && (!userData || !userData.nombre)) {
+                // Obtener datos del usuario desde la URL si están disponibles
+                const urlParams = new URLSearchParams(window.location.search);
+                const tokenParam = urlParams.get('token');
+                
+                if (tokenParam) {
+                    // Limpiar la URL sin recargar la página
+                    window.history.replaceState({}, document.title, '/cliente/dashboard');
+                    
+                    // Guardar el token en localStorage y cookie
+                    localStorage.setItem('token', tokenParam);
+                    setCookie('token', tokenParam, 1); // 1 día
+                    
+                    // Intentar decodificar el token para obtener información básica
+                    try {
+                        const base64Url = tokenParam.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        
+                        const decodedToken = JSON.parse(jsonPayload);
+                        
+                        // Si no tenemos datos completos, hacer una petición al servidor
+                        fetch('/api/users/me', {
+                            headers: {
+                                'Authorization': `Bearer ${tokenParam}`
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.user) {
+                                localStorage.setItem('userData', JSON.stringify(data.user));
+                                actualizarInterfazUsuario(data.user);
+                            }
+                        })
+                        .catch(error => console.error('Error al obtener datos del usuario:', error));
+                    } catch (e) {
+                        console.error('Error al decodificar token:', e);
+                    }
+                }
+            } else if (userData && userData.nombre) {
+                // Si ya tenemos datos del usuario, actualizar la interfaz
+                actualizarInterfazUsuario(userData);
+            }
+            
+            return true;
+        }
+        
+        // Actualizar la interfaz con los datos del usuario
+        function actualizarInterfazUsuario(userData) {
+            if (userData.nombre) {
+                document.getElementById('userName').textContent = userData.nombre;
+            }
+            if (userData.rol) {
+                document.getElementById('userRole').textContent = capitalizar(userData.rol);
+            }
+        }
+        
+        // Función para obtener cookies
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        // Función para establecer cookies
+        function setCookie(name, value, days) {
+            let expires = '';
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = `; expires=${date.toUTCString()}`;
+            }
+            document.cookie = `${name}=${value}${expires}; path=/`;
+        }
+        
+        // Mostrar fecha actual
+        function mostrarFechaActual() {
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const fecha = new Date().toLocaleDateString('es-ES', opciones);
+            document.getElementById('currentDate').textContent = capitalizar(fecha);
+        }
+        
+        // Función para capitalizar texto
+        function capitalizar(texto) {
+            return texto.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+        }
+        
+        // Cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Eliminar token y datos de usuario
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            // Redireccionar a la página de login
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict';
+
+            // Redirigir al login
+            window.location.href = '/auth/login';
+        });
+
+        // Cargar casos del cliente
+        async function cargarCasos() {
+            const token = localStorage.getItem('token') || getCookie('token');
+            if (!token) return;
+            
+            try {
+                // Mostrar indicador de carga
+                document.getElementById('casosTbody').innerHTML = `
+                    <tr class="loading-row">
+                        <td colspan="6" class="text-center">
+                            <div class="loading-spinner"></div>
+                            <p>Cargando casos...</p>
+                        </td>
+                    </tr>
+                `;
+                
+                const response = await fetch('/api/casos/cliente', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.casos) {
+                    const casosContainer = document.getElementById('casosTbody');
+                    const noCasesMessage = document.getElementById('noCasesMessage');
+                    
+                    if (data.casos.length === 0) {
+                        // No hay casos, mostrar mensaje
+                        casosContainer.innerHTML = '';
+                        noCasesMessage.style.display = 'flex';
+                    } else {
+                        // Hay casos, mostrarlos en la tabla
+                        noCasesMessage.style.display = 'none';
+                        casosContainer.innerHTML = '';
+                        
+                        // Actualizar las estadísticas
+                        actualizarEstadisticas(data.casos);
+                        
+                        // Mostrar los casos en la tabla
+                        data.casos.forEach(caso => {
+                            // Formatear la fecha
+                            const fecha = new Date(caso.fechaRegistro);
+                            const fechaFormateada = `${fecha.getDate().toString().padStart(2, '0')}/${(fecha.getMonth() + 1).toString().padStart(2, '0')}/${fecha.getFullYear()}`;
+                            
+                            // Determinar la clase de estado
+                            let estadoClase = '';
+                            switch (caso.estado) {
+                                case 'enviado':
+                                    estadoClase = 'status-pending';
+                                    break;
+                                case 'aceptado':
+                                case 'iniciado':
+                                    estadoClase = 'status-active';
+                                    break;
+                                case 'denegado':
+                                    estadoClase = 'status-rejected';
+                                    break;
+                                case 'finalizado':
+                                    estadoClase = 'status-closed';
+                                    break;
+                                default:
+                                    estadoClase = 'status-pending';
+                            }
+                            
+                            // Formatear el tipo de caso
+                            const tipoFormateado = formatearTipoCaso(caso.tipo);
+                            
+                            // Determinar el abogado asignado
+                            const abogado = caso.abogadoId ? caso.abogadoNombre || 'Asignado' : 'Abogados en revisión';
+                            
+                            // Crear la fila
+                            const fila = document.createElement('tr');
+                            fila.innerHTML = `
+                                <td>${caso.numeroExpediente}</td>
+                                <td>${caso.titulo}</td>
+                                <td>${tipoFormateado}</td>
+                                <td>${fechaFormateada}</td>
+                                <td><span class="status ${estadoClase}">${capitalizar(caso.estado)}</span></td>
+                                <td>${abogado}</td>
+                            `;
+                            
+                            casosContainer.appendChild(fila);
+                        });
+                    }
+                } else {
+                    throw new Error(data.message || 'Error al cargar los casos');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('casosTbody').innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center error-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Error al cargar los casos. Intente nuevamente.</p>
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+        
+        // Formatear tipo de caso para mostrar
+        function formatearTipoCaso(tipo) {
+            const tipos = {
+                'divorcio': 'Divorcio',
+                'contrato_laboral': 'Contrato Laboral',
+                'propiedad_intelectual': 'Propiedad Intelectual',
+                'herencia': 'Herencia',
+                'inmobiliario': 'Inmobiliario',
+                'inscripcion': 'Inscripción',
+                'otro': 'Otro'
+            };
+            
+            return tipos[tipo] || capitalizar(tipo);
+        }
+        
+        // Actualizar estadísticas en las tarjetas
+        function actualizarEstadisticas(casos) {
+            // Contar casos por estado
+            const estadisticas = {
+                total: casos.length,
+                activos: casos.filter(c => c.estado === 'aceptado' || c.estado === 'iniciado').length,
+                pendientes: casos.filter(c => c.estado === 'enviado').length,
+                finalizados: casos.filter(c => c.estado === 'finalizado').length,
+                denegados: casos.filter(c => c.estado === 'denegado').length
+            };
+            
+            // Actualizar las tarjetas (asumiendo que las tarjetas están en el mismo orden)
+            const cards = document.querySelectorAll('.card .card-value');
+            
+            // Casos activos
+            if (cards[0]) cards[0].textContent = estadisticas.activos;
+            
+            // Casos pendientes
+            if (cards[1]) cards[1].textContent = estadisticas.pendientes;
+            
+            // Total de casos
+            if (cards[2]) cards[2].textContent = estadisticas.total;
+            
+            // Casos finalizados
+            if (cards[3]) cards[3].textContent = estadisticas.finalizados;
+        }
+        
+        // Evento para el botón de actualizar casos
+        document.getElementById('refreshCasesBtn').addEventListener('click', function() {
+            cargarCasos();
+        });
+        
+        // Inicializar al cargar la página
+        document.addEventListener('DOMContentLoaded', function () {
+            verificarSesion();
+            mostrarFechaActual();
+            cargarCasos();
+        });
+    </script>
+</body>
+</html>

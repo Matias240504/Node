@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sistema Legal - Página Principal</title>
+    <title>Sistema Legal - Dashboard Juez</title>
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="stylesheet" href="/css/dashboardCliente.css" />
+    <link rel="stylesheet" href="/css/dashboardJuez.css" />
     <style>
-        /* Estilos adicionales para el dashboard del cliente */
+        /* Estilos adicionales para el dashboard del juez */
         .user-info {
             margin-top: auto;
             padding-top: var(--spacing-md);
@@ -18,7 +18,7 @@
             align-items: center;
             position: relative;
         }
-
+        
         .user-avatar {
             width: 40px;
             height: 40px;
@@ -29,7 +29,7 @@
             justify-content: center;
             margin-right: var(--spacing-sm);
         }
-
+        
         .logout-btn {
             position: absolute;
             right: 0;
@@ -40,7 +40,7 @@
             font-size: 1.2rem;
             transition: color 0.3s;
         }
-
+        
         .logout-btn:hover {
             color: white;
         }
@@ -53,155 +53,210 @@
             <div class="sidebar-header">
                 <h1>Sistema Legal</h1>
             </div>
-
+            
             <ul class="sidebar-menu">
                 <li><a href="#" class="active"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="#"><i class="fas fa-plus-circle"></i> Crear Caso</a></li>
+                <li><a href="#"><i class="fas fa-balance-scale"></i> Casos Judiciales</a></li>
+                <li><a href="#"><i class="fas fa-gavel"></i> Audiencias</a></li>
+                <li><a href="#"><i class="fas fa-file-contract"></i> Resoluciones</a></li>
+                <li><a href="#"><i class="fas fa-calendar-alt"></i> Calendario</a></li>
+                <li><a href="#"><i class="fas fa-chart-bar"></i> Estadísticas</a></li>
             </ul>
-
+            
             <div class="user-info">
                 <div class="user-avatar">
                     <i class="fas fa-user"></i>
                 </div>
                 <div>
                     <div id="userName"><%= user.nombre %></div>
-                    <small id="userRole">Cliente</small>
+                    <small id="userRole">Juez</small>
                 </div>
                 <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
             </div>
         </div>
-
+        
         <!-- Main Content -->
         <div class="main-content">
             <div class="page-header">
-                <h2 class="page-title">Dashboard de Cliente</h2>
+                <h2 class="page-title">Dashboard de Juez</h2>
                 <div>
                     <span id="currentDate"></span>
                 </div>
             </div>
-
+            
             <!-- Stats Cards -->
             <div class="cards-container">
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Casos Activos</h3>
+                        <h3 class="card-title">Casos Pendientes</h3>
                         <div class="card-icon" style="background-color: var(--secondary-color);">
                             <i class="fas fa-briefcase"></i>
                         </div>
                     </div>
-                    <div class="card-value">24</div>
-                    <div class="card-description">5 casos nuevos esta semana</div>
+                    <div class="card-value">32</div>
+                    <div class="card-description">7 casos nuevos esta semana</div>
                 </div>
-
+                
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Audiencias Pendientes</h3>
+                        <h3 class="card-title">Audiencias Programadas</h3>
                         <div class="card-icon" style="background-color: var(--warning-color);">
                             <i class="fas fa-gavel"></i>
                         </div>
                     </div>
-                    <div class="card-value">8</div>
+                    <div class="card-value">12</div>
                     <div class="card-description">Próxima: 18 de Mayo, 2025</div>
                 </div>
-
+                
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Documentos</h3>
+                        <h3 class="card-title">Resoluciones</h3>
                         <div class="card-icon" style="background-color: var(--success-color);">
-                            <i class="fas fa-file-alt"></i>
+                            <i class="fas fa-file-contract"></i>
                         </div>
                     </div>
-                    <div class="card-value">156</div>
-                    <div class="card-description">12 pendientes de revisión</div>
+                    <div class="card-value">45</div>
+                    <div class="card-description">8 pendientes de firma</div>
                 </div>
-
+                
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Clientes</h3>
+                        <h3 class="card-title">Casos Resueltos</h3>
                         <div class="card-icon" style="background-color: var(--dark-color);">
-                            <i class="fas fa-users"></i>
+                            <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
-                    <div class="card-value">42</div>
-                    <div class="card-description">3 nuevos este mes</div>
+                    <div class="card-value">128</div>
+                    <div class="card-description">15 este mes</div>
                 </div>
             </div>
-
-            <!-- Recent Cases -->
+            
+            <!-- Casos Pendientes -->
             <div class="section">
                 <div class="section-header">
-                    <h3 class="section-title">Casos Recientes</h3>
+                    <h3 class="section-title">Casos Pendientes de Resolución</h3>
                     <button>Ver todos</button>
                 </div>
-
+                
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Caso #</th>
-                                <th>Cliente</th>
                                 <th>Tipo</th>
-                                <th>Fecha de Inicio</th>
+                                <th>Partes</th>
+                                <th>Fecha de Ingreso</th>
                                 <th>Estado</th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr>
-                                <td>C-2025-042</td>
-                                <td>María González</td>
+                                <td>J-2025-042</td>
                                 <td>Divorcio</td>
+                                <td>González vs. Rodríguez</td>
                                 <td>10/05/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
-                            </tr>
-                            <tr>
-                                <td>C-2025-041</td>
-                                <td>Juan Pérez</td>
-                                <td>Contrato Laboral</td>
-                                <td>05/05/2025</td>
                                 <td><span class="status status-pending">Pendiente</span></td>
                                 <td><a href="#"><i class="fas fa-eye"></i></a></td>
                             </tr>
                             <tr>
-                                <td>C-2025-039</td>
-                                <td>Empresa XYZ</td>
+                                <td>J-2025-041</td>
+                                <td>Laboral</td>
+                                <td>Pérez vs. Empresa ABC</td>
+                                <td>05/05/2025</td>
+                                <td><span class="status status-active">En proceso</span></td>
+                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                            <tr>
+                                <td>J-2025-039</td>
                                 <td>Propiedad Intelectual</td>
+                                <td>Empresa XYZ vs. Corp. 123</td>
                                 <td>28/04/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
+                                <td><span class="status status-active">En proceso</span></td>
                                 <td><a href="#"><i class="fas fa-eye"></i></a></td>
                             </tr>
                             <tr>
-                                <td>C-2025-036</td>
-                                <td>Roberto Sánchez</td>
+                                <td>J-2025-036</td>
                                 <td>Herencia</td>
+                                <td>Familia Sánchez</td>
                                 <td>15/04/2025</td>
-                                <td><span class="status status-closed">Cerrado</span></td>
+                                <td><span class="status status-pending">Pendiente</span></td>
                                 <td><a href="#"><i class="fas fa-eye"></i></a></td>
                             </tr>
                             <tr>
-                                <td>C-2025-035</td>
-                                <td>Laura Martínez</td>
+                                <td>J-2025-035</td>
                                 <td>Inmobiliario</td>
+                                <td>Martínez vs. Constructora XYZ</td>
                                 <td>10/04/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
+                                <td><span class="status status-active">En proceso</span></td>
                                 <td><a href="#"><i class="fas fa-eye"></i></a></td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-
-            <!-- Aquí se eliminó completamente la sección "Calendario y Próximos Eventos" -->
+            
+            <!-- Audiencias Programadas -->
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Audiencias Programadas</h3>
+                    <button>Ver todas</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Caso #</th>
+                                <th>Tipo</th>
+                                <th>Partes</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Sala</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>J-2025-041</td>
+                                <td>Laboral</td>
+                                <td>Pérez vs. Empresa ABC</td>
+                                <td>18/05/2025</td>
+                                <td>10:00 AM</td>
+                                <td>Sala 3</td>
+                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                            <tr>
+                                <td>J-2025-042</td>
+                                <td>Divorcio</td>
+                                <td>González vs. Rodríguez</td>
+                                <td>20/05/2025</td>
+                                <td>11:30 AM</td>
+                                <td>Sala 2</td>
+                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                            <tr>
+                                <td>J-2025-039</td>
+                                <td>Propiedad Intelectual</td>
+                                <td>Empresa XYZ vs. Corp. 123</td>
+                                <td>22/05/2025</td>
+                                <td>09:00 AM</td>
+                                <td>Sala 1</td>
+                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-
+    
     <script>
         // Mostrar fecha actual
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const today = new Date();
         document.getElementById('currentDate').textContent = today.toLocaleDateString('es-ES', options);
-
+        
         // Manejar el cierre de sesión
         document.getElementById('logoutBtn').addEventListener('click', function () {
             // Eliminar token y datos del usuario del localStorage
@@ -209,17 +264,16 @@
             localStorage.removeItem('userName');
             localStorage.removeItem('userRole');
             localStorage.removeItem('userId');
-
+            
             // Eliminar la cookie de token
             document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict';
-
+            
             // Redirigir al login
             window.location.href = '/auth/login';
         });
-
-        // No es necesario verificar el token en la página principal
+        
         document.addEventListener('DOMContentLoaded', function () {
-            // Aquí podrías agregar cualquier inicialización adicional para la página principal
+            // Aquí podrías agregar cualquier inicialización adicional para el dashboard de juez
         });
     </script>
 </body>

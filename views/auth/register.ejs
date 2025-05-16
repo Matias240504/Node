@@ -9,6 +9,40 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/register.css">
+    <style>
+        /* Estilos para el grupo de contraseñas */
+        .password-group {
+            position: relative;
+            width: 100%;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .campo-password {
+            width: 100%;
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        .campo-password input {
+            width: 100%;
+        }
+        
+        .btn-toggle-password {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            margin-top: 5px;
+        }
+        
+        .btn-toggle-password:hover {
+            background-color: var(--accent-color);
+        }
+    </style>
 </head>
 <body>
     <h2>Registro de Usuario</h2>
@@ -19,14 +53,16 @@
         <input type="email" placeholder="Correo" name="email" required />
         <input type="text" placeholder="Teléfono" name="telefono" required />
         <input type="text" placeholder="Dirección" name="direccion" required />
-        <div class="campo-password">
-            <input type="password" id="contrasena" name="contrasena" placeholder="Contraseña" required />
-            <button type="button" id="toggleContrasena" class="btn-toggle">Mostrar</button>
-        </div>
+        <div class="password-group">
+            <div class="campo-password">
+                <input type="password" id="contrasena" name="contrasena" placeholder="Contraseña" required />
+            </div>
 
-        <div class="campo-password">
-            <input type="password" id="confirmContrasena" name="confirmContrasena" placeholder="Confirmar Contraseña" required />
-            <button type="button" id="toggleConfirm" class="btn-toggle">Mostrar</button>
+            <div class="campo-password">
+                <input type="password" id="confirmContrasena" name="confirmContrasena" placeholder="Confirmar Contraseña" required />
+            </div>
+            
+            <button type="button" id="togglePassword" class="btn-toggle-password">Mostrar Contraseñas</button>
         </div>
 
         <button type="submit">Registrarse</button>
@@ -55,22 +91,20 @@
         }
         });
 
-        const toggleContrasena = document.getElementById('toggleContrasena');
+        const togglePassword = document.getElementById('togglePassword');
         const inputContrasena = document.getElementById('contrasena');
+        const inputConfirmContrasena = document.getElementById('confirmContrasena');
 
-        toggleContrasena.addEventListener('click', () => {
+        togglePassword.addEventListener('click', () => {
+            // Determinar el tipo actual y cambiarlo al opuesto
             const tipo = inputContrasena.type === 'password' ? 'text' : 'password';
+            
+            // Cambiar ambos campos de contraseña
             inputContrasena.type = tipo;
-            toggleContrasena.textContent = tipo === 'password' ? 'Mostrar' : 'Ocultar';
-        });
-
-        const toggleConfirm = document.getElementById('toggleConfirm');
-        const inputConfirm = document.getElementById('confirmContrasena');
-
-        toggleConfirm.addEventListener('click', () => {
-            const tipo = inputConfirm.type === 'password' ? 'text' : 'password';
-            inputConfirm.type = tipo;
-            toggleConfirm.textContent = tipo === 'password' ? 'Mostrar' : 'Ocultar';
+            inputConfirmContrasena.type = tipo;
+            
+            // Actualizar el texto del botón
+            togglePassword.textContent = tipo === 'password' ? 'Mostrar Contraseñas' : 'Ocultar Contraseñas';
         });
     </script>
 </body>

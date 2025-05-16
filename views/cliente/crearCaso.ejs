@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sistema Legal - Crear Caso</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/dashboardCliente.css" />
+    <link rel="stylesheet" href="/css/crearCaso.css" />
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sistema Legal</h1>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/cliente/dashboard"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="/cliente/crearCaso" class="active"><i class="fas fa-plus-circle"></i> Crear Caso</a></li>
+            </ul>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div id="userName"><%= user.nombre %></div>
+                    <small id="userRole">Cliente</small>
+                </div>
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Crear Nuevo Caso</h2>
+                <div>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+            
+            <!-- Formulario de Creación de Caso -->
+            <section class="section create-case-section">
+                <div class="section-header">
+                    <h3 class="section-title">Información del Caso</h3>
+                    <button type="submit" form="caseForm" class="save-button"><i class="fas fa-save"></i> Guardar Caso</button>
+                </div>
+                
+                <form id="caseForm" class="case-form" enctype="multipart/form-data">
+                    <div class="form-group full-width">
+                        <label for="case-title">Título del Caso</label>
+                        <input type="text" id="case-title" name="titulo" placeholder="Ingrese título descriptivo del caso" required />
+                        <div class="validation-message">Por favor ingrese un título para el caso</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="case-type">Tipo de Caso</label>
+                        <select id="case-type" name="tipo" required>
+                            <option value="" disabled selected>Seleccione un tipo</option>
+                            <option value="divorcio">Divorcio</option>
+                            <option value="contrato_laboral">Contrato Laboral</option>
+                            <option value="propiedad_intelectual">Propiedad Intelectual</option>
+                            <option value="herencia">Herencia</option>
+                            <option value="inmobiliario">Inmobiliario</option>
+                            <option value="inscripcion">Inscripción</option>
+                            <option value="otro">Otro</option>
+                        </select>
+                        <div class="validation-message">Por favor seleccione un tipo de caso</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="case-priority">Prioridad</label>
+                        <select id="case-priority" name="prioridad">
+                            <option value="normal" selected>Normal</option>
+                            <option value="alta">Alta</option>
+                            <option value="urgente">Urgente</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group full-width">
+                        <label for="case-description">Descripción Detallada</label>
+                        <textarea id="case-description" name="descripcion" rows="6" placeholder="Describa los detalles del caso, incluyendo toda la información relevante..." required></textarea>
+                        <div class="validation-message">Por favor proporcione una descripción del caso</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="case-files">Subir documentos</label>
+                        <div class="file-upload">
+                            <label for="case-files"><i class="fas fa-upload"></i> Seleccionar archivos</label>
+                            <input type="file" id="case-files" name="files[]" multiple />
+                            <span id="file-count">0 archivos seleccionados</span>
+                        </div>
+                        <div id="file-list" class="file-list"></div>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>
+    
+    <script>
+        // Gestión de sesión y token
+        function verificarSesion() {
+            const token = localStorage.getItem('token') || getCookie('token');
+            const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+            
+            if (!token) {
+                // Si no hay token, redirigir al login
+                window.location.href = '/auth/login';
+                return false;
+            }
+            
+            // Si hay token pero no hay datos de usuario en localStorage, intentar recuperarlos
+            if (token && (!userData || !userData.nombre)) {
+                // Obtener datos del usuario desde la URL si están disponibles
+                const urlParams = new URLSearchParams(window.location.search);
+                const tokenParam = urlParams.get('token');
+                
+                if (tokenParam) {
+                    // Limpiar la URL sin recargar la página
+                    window.history.replaceState({}, document.title, '/cliente/crearCaso');
+                    
+                    // Guardar el token en localStorage y cookie
+                    localStorage.setItem('token', tokenParam);
+                    setCookie('token', tokenParam, 1); // 1 día
+                    
+                    // Intentar decodificar el token para obtener información básica
+                    try {
+                        const base64Url = tokenParam.split('.')[1];
+                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                        }).join(''));
+                        
+                        const decodedToken = JSON.parse(jsonPayload);
+                        
+                        // Si no tenemos datos completos, hacer una petición al servidor
+                        fetch('/api/users/me', {
+                            headers: {
+                                'Authorization': `Bearer ${tokenParam}`
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.user) {
+                                localStorage.setItem('userData', JSON.stringify(data.user));
+                                actualizarInterfazUsuario(data.user);
+                            }
+                        })
+                        .catch(error => console.error('Error al obtener datos del usuario:', error));
+                    } catch (e) {
+                        console.error('Error al decodificar token:', e);
+                    }
+                }
+            } else if (userData && userData.nombre) {
+                // Si ya tenemos datos del usuario, actualizar la interfaz
+                actualizarInterfazUsuario(userData);
+            }
+            
+            return true;
+        }
+        
+        // Actualizar la interfaz con los datos del usuario
+        function actualizarInterfazUsuario(userData) {
+            if (userData.nombre) {
+                document.getElementById('userName').textContent = userData.nombre;
+            }
+            if (userData.rol) {
+                document.getElementById('userRole').textContent = capitalizar(userData.rol);
+            }
+        }
+        
+        // Función para obtener cookies
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return null;
+        }
+        
+        // Función para establecer cookies
+        function setCookie(name, value, days) {
+            let expires = '';
+            if (days) {
+                const date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = `; expires=${date.toUTCString()}`;
+            }
+            document.cookie = `${name}=${value}${expires}; path=/`;
+        }
+        
+        // Función para capitalizar texto (primera letra de cada palabra en mayúscula)
+        function capitalizar(texto) {
+            return texto.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+        }
+        
+        // Mostrar fecha actual
+        function mostrarFechaActual() {
+            const opciones = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            const fecha = new Date().toLocaleDateString('es-ES', opciones);
+            document.getElementById('currentDate').textContent = capitalizar(fecha);
+        }
+        
+        // Capitalizar automáticamente el título
+        document.getElementById('case-title').addEventListener('blur', function() {
+            this.value = capitalizar(this.value);
+        });
+        
+        // Manejar la selección de archivos
+        document.getElementById('case-files').addEventListener('change', function(e) {
+            const fileCount = e.target.files.length;
+            document.getElementById('file-count').textContent = fileCount + (fileCount === 1 ? ' archivo seleccionado' : ' archivos seleccionados');
+            
+            const fileList = document.getElementById('file-list');
+            fileList.innerHTML = '';
+            
+            for (let i = 0; i < fileCount; i++) {
+                const file = e.target.files[i];
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.innerHTML = `
+                    <span class="file-name">${file.name}</span>
+                    <button type="button" class="remove-file" data-index="${i}"><i class="fas fa-times"></i></button>
+                `;
+                fileList.appendChild(fileItem);
+            }
+            
+            // Agregar evento para eliminar archivos
+            document.querySelectorAll('.remove-file').forEach(button => {
+                button.addEventListener('click', function() {
+                    // Nota: En un entorno real, necesitaríamos una solución más compleja para eliminar archivos
+                    // ya que los archivos en un input file no se pueden eliminar individualmente
+                    alert('Funcionalidad de eliminar archivo individual será implementada en una versión futura');
+                });
+            });
+        });
+        
+        // Manejar el envío del formulario
+        document.getElementById('caseForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validar el formulario
+            let isValid = true;
+            const titulo = document.getElementById('case-title').value.trim();
+            const tipo = document.getElementById('case-type').value;
+            const descripcion = document.getElementById('case-description').value.trim();
+            
+            // Validación básica
+            if (!titulo) {
+                document.getElementById('case-title').parentElement.classList.add('error');
+                isValid = false;
+            } else {
+                document.getElementById('case-title').parentElement.classList.remove('error');
+            }
+            
+            if (!tipo) {
+                document.getElementById('case-type').parentElement.classList.add('error');
+                isValid = false;
+            } else {
+                document.getElementById('case-type').parentElement.classList.remove('error');
+            }
+            
+            if (!descripcion) {
+                document.getElementById('case-description').parentElement.classList.add('error');
+                isValid = false;
+            } else {
+                document.getElementById('case-description').parentElement.classList.remove('error');
+            }
+            
+            if (!isValid) {
+                return;
+            }
+            
+            // Obtener el token para la autorización
+            const token = localStorage.getItem('token') || getCookie('token');
+            if (!token) {
+                alert('No se encontró token de autenticación. Por favor, inicie sesión nuevamente.');
+                window.location.href = '/auth/login';
+                return;
+            }
+            
+            // Preparar los datos para enviar
+            const formData = new FormData(this);
+            
+            try {
+                const response = await fetch('/api/casos/crear', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert('Caso creado exitosamente con número de expediente: ' + result.numeroExpediente);
+                    window.location.href = '/cliente/dashboard';
+                } else {
+                    alert(result.message || 'Error al crear el caso');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Ocurrió un error al procesar la solicitud');
+            }
+        });
+        
+        // Botón de cerrar sesión
+        document.getElementById('logoutBtn').addEventListener('click', function() {
+            // Eliminar token y datos de usuario
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+            document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            // Redireccionar a la página de login
+            window.location.href = '/auth/login';
+        });
+        
+        // Inicializar
+        verificarSesion();
+        mostrarFechaActual();
+    </script>
+</body>
+</html>

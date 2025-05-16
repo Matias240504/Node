@@ -39,4 +39,28 @@ const allowRoles = (...roles) => {
     };
 };
 
-module.exports = { verifyToken, allowRoles };
+// Middleware específico para verificar si el usuario es cliente
+const isCliente = (req, res, next) => {
+    if (req.user.rol !== 'cliente') {
+        return res.status(403).json({ message: 'Acceso denegado: se requiere rol de cliente' });
+    }
+    next();
+};
+
+// Middleware específico para verificar si el usuario es abogado
+const isAbogado = (req, res, next) => {
+    if (req.user.rol !== 'abogado') {
+        return res.status(403).json({ message: 'Acceso denegado: se requiere rol de abogado' });
+    }
+    next();
+};
+
+// Middleware específico para verificar si el usuario es juez
+const isJuez = (req, res, next) => {
+    if (req.user.rol !== 'juez') {
+        return res.status(403).json({ message: 'Acceso denegado: se requiere rol de juez' });
+    }
+    next();
+};
+
+module.exports = { verifyToken, allowRoles, isCliente, isAbogado, isJuez };
