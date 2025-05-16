@@ -1,0 +1,58 @@
+<!-- views/home.ejs -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Sistema Legal</title>
+        <link href="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.1/dist/tailwind.min.css" rel="stylesheet">
+        <link rel="stylesheet" href="/css/index.css">
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-white shadow-md p-4 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-800">Sistema Legal</h1>
+        <div class="btn-group">
+            <a href="/auth/login" class="btn-login">Login</a>
+            <a href="/auth/register" class="btn-register">Register</a>
+        </div>
+        </header>
+
+        <!-- Contenido principal -->
+        <main>
+            <section class="hero">
+                <h2>Gestión Legal Inteligente y Eficiente</h2>
+                <p>
+                    Bienvenido a <strong>Sistema Legal</strong>, la plataforma diseñada para abogados, estudios jurídicos y organizaciones legales que buscan optimizar la administración de casos, clientes y documentación de forma segura y moderna.
+                </p>
+            </section>
+
+            <section class="features">
+                <div class="feature">
+                    <h3>📁 Gestión de Casos</h3>
+                    <p>Organiza expedientes, audiencias y seguimientos con facilidad desde un solo lugar.</p>
+                </div>
+                <div class="feature">
+                    <h3>👤 Control de Clientes</h3>
+                    <p>Registra clientes, historial de servicios y contactos de forma centralizada y segura.</p>
+                </div>
+                <div class="feature">
+                    <h3>📄 Documentación Digital</h3>
+                    <p>Sube, almacena y accede a documentos legales desde cualquier dispositivo, en cualquier momento.</p>
+                </div>
+                <div class="feature">
+                    <h3>📊 Informes y Estadísticas</h3>
+                    <p>Genera reportes automáticos sobre tus casos, tiempos de respuesta y productividad legal.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <div class="footer-container">
+                <p>&copy; 2025 Sistema Legal. Todos los derechos reservados.</p>
+                <p>Desarrollado para mejorar la eficiencia y transparencia en el sector jurídico.</p>
+                <p>Contacto: soporte@sistemalegal.com | Tel: +51 900 123 456</p>
+            </div>
+        </footer> 
+</body>
+</html>

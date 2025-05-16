@@ -4,6 +4,8 @@ const dotenv = require('dotenv');
 const userRoutes = require('./routers/userRouter');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const { verifyViewToken, viewAllowRoles } = require('./middlewares/viewAuthMiddleware');
 
 dotenv.config();
 
@@ -19,6 +21,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser()); // Para manejar cookies
 
 // Rutas
 app.use('/api/users', userRoutes);
@@ -40,6 +43,23 @@ app.get('/auth/login', (req, res) => {
     res.render('auth/login');
 });
 
+app.get('/', (req, res) => {
+    res.render('index');
+});
+
 app.get('/auth/register', (req, res) => {
     res.render('auth/register');
+});
+
+// Rutas protegidas para dashboards
+app.get('/cliente/dashboard', verifyViewToken, viewAllowRoles('cliente'), (req, res) => {
+    res.render('auth/cliente/dashboard', { user: req.user });
+});
+
+app.get('/abogado/dashboard', verifyViewToken, viewAllowRoles('abogado'), (req, res) => {
+    res.render('auth/abogado/dashboard', { user: req.user });
+});
+
+app.get('/juez/dashboard', verifyViewToken, viewAllowRoles('juez'), (req, res) => {
+    res.render('auth/juez/dashboard', { user: req.user });
 });

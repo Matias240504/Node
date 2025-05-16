@@ -83,13 +83,22 @@ exports.login = async (req, res) => {
         const isMatch = await bcrypt.compare(contrasena, user.contrasena);
         if (!isMatch) return res.status(401).json({ message: 'Contraseña incorrecta' });
 
+        // Crear token JWT con información del usuario
         const token = jwt.sign(
-            { id: user._id, rol: user.rol, usuario: user.usuario },
+            { id: user._id, rol: user.rol },
             process.env.JWT_SECRET_KEY,
-            { expiresIn: '1d' }
+            { expiresIn: '24h' } // Token válido por 24 horas
         );
 
-        res.status(200).json({ message: 'Login exitoso', token });
+        // Enviar respuesta con información completa del usuario
+        res.status(200).json({ 
+            message: 'Login exitoso', 
+            token,
+            usuario: user.nombre, // Nombre del usuario para mostrar
+            userId: user._id, // ID del usuario
+            rol: user.rol, // Rol del usuario para redirección
+            email: user.email // Email del usuario
+        });
     } catch (err) {
         res.status(500).json({ error: 'Error al iniciar sesión', details: err });
     }
