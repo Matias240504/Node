@@ -1,0 +1,153 @@
+/* Estilos comunes para los dashboards */
+
+/* Estos estilos han sido consolidados desde common.css y otros archivos duplicados */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Ajustes para el contenido principal con la barra lateral */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    margin-left: 240px;
+}
+
+/* Estilos para tarjetas */
+.card {
+    background-color: white;
+    border-radius: var(--radius-md, 12px);
+    box-shadow: var(--shadow-sm, 0 2px 5px rgba(0,0,0,0.05));
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    background-color: var(--light-color, #ecf0f1);
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-dark, #333333);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 70px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+}
+
+/* Estilos para la barra lateral y componentes de usuario */
+.sidebar {
+    width: 240px;
+    background-color: var(--primary-color);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: var(--spacing-lg, 20px) var(--spacing-md, 15px);
+    position: fixed;
+    height: 100vh;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
+    box-shadow: 2px 0 8px rgba(0,0,0,0.1);
+    z-index: 1000;
+}
+
+.sidebar-header h1 {
+    font-family: var(--font-family-header, 'Poppins', sans-serif);
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: var(--spacing-lg, 20px);
+    color: white;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.sidebar-menu li {
+    margin-bottom: 5px;
+}
+
+.sidebar-menu a {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: var(--radius-md, 8px);
+    color: rgba(255, 255, 255, 0.8);
+    text-decoration: none;
+    transition: all 0.3s;
+    font-weight: 500;
+}
+
+.sidebar-menu a:hover,
+.sidebar-menu a.active {
+    background-color: var(--secondary-color);
+    color: #fff;
+}
+
+.sidebar-menu i {
+    margin-right: 10px;
+    font-size: 1.1rem;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Estilos para la información del usuario en la barra lateral */
+.user-info {
+    margin-top: auto;
+    padding-top: var(--spacing-md, 15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--secondary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: var(--spacing-sm, 10px);
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: color 0.3s;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.logout-btn:hover {
+    color: white;
+}

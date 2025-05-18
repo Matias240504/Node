@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Sistema Legal - Dashboard Abogado</title>
-    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="stylesheet" href="/css/dashboardAbogado.css" />
-    <link rel="stylesheet" href="/css/modalDetalleCaso.css" />
-    <link rel="stylesheet" href="/css/titleFixes.css" />
-    <link rel="stylesheet" href="/css/dashboardCommon.css" />
+    <%- include('./partials/styles', {title: 'Dashboard Abogado'}) %>
     <style>
         /* Estilos adicionales para el dashboard del abogado */
         .btn-detalle {
@@ -77,40 +68,7 @@
         .btn-link i {
             font-size: 0.8rem;
         }
-        .user-info {
-            margin-top: auto;
-            padding-top: var(--spacing-md);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: var(--spacing-sm);
-        }
-        
-        .logout-btn {
-            position: absolute;
-            right: 0;
-            background: none;
-            border: none;
-            color: rgba(255, 255, 255, 0.7);
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: color 0.3s;
-        }
-        
-        .logout-btn:hover {
-            color: white;
-        }
+        /* Los estilos para .user-info, .user-avatar y .logout-btn se han movido a dashboardCommon.css */
         
         /* Estilos para insignias de asignación */
         .assigned-badge {
@@ -136,31 +94,7 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h1>Sistema Legal</h1>
-            </div>
-            
-            <ul class="sidebar-menu">
-                <li><a href="/abogado/dashboard" class="active"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="/abogado/casos" id="casos-link"><i class="fas fa-gavel"></i> Casos</a></li>
-                <li><a href="/abogado/crearAudiencia" id="clientes-link"><i class="fas fa-users"></i> Crear Audiencia</a></li>
-                <li><a href="/abogado/audiencias" id="audiencias-link"><i class="fas fa-calendar-alt"></i> Audiencias</a></li>
-                <li><a href="/abogado/documentos" id="documentos-link"><i class="fas fa-file-alt"></i> Documentos</a></li>
-                <li><a href="/abogado/reportes" id="reportes-link"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-            </ul>
-            
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div>
-                    <div id="userName"><%= user.nombre %></div>
-                    <small id="userRole">Abogado</small>
-                </div>
-                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </div>
+        <%- include('./partials/sidebar', {currentPath: '/abogado/dashboard'}) %>
         
         <!-- Main Content -->
         <div class="main-content">
@@ -333,56 +267,103 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Audiencias Creadas -->
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Audiencias Creadas</h3>
+                    <a href="/abogado/audiencias"><button>Ver todas <i class="fas fa-arrow-right"></i></button></a>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Caso #</th>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <% if (audienciasCreadas && audienciasCreadas.length > 0) { %>
+                            <% audienciasCreadas.forEach(function(audiencia) { %>
+                            <tr>
+                                <td><%= audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible' %></td>
+                                <td><%= audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado' %></td>
+                                <td>
+                                    <% 
+                                    let tipoFormateado = '';
+                                    switch(audiencia.tipo) {
+                                        case 'inicial':
+                                            tipoFormateado = 'Inicial';
+                                            break;
+                                        case 'seguimiento':
+                                            tipoFormateado = 'Seguimiento';
+                                            break;
+                                        case 'presentacion_pruebas':
+                                            tipoFormateado = 'Presentación de Pruebas';
+                                            break;
+                                        case 'testimonio':
+                                            tipoFormateado = 'Testimonio';
+                                            break;
+                                        case 'alegatos':
+                                            tipoFormateado = 'Alegatos';
+                                            break;
+                                        case 'sentencia':
+                                            tipoFormateado = 'Sentencia';
+                                            break;
+                                        case 'otro':
+                                            tipoFormateado = 'Otro';
+                                            break;
+                                        default:
+                                            tipoFormateado = audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1);
+                                    }
+                                    %>
+                                    <%= tipoFormateado %>
+                                </td>
+                                <td><%= new Date(audiencia.fecha).toLocaleDateString() %></td>
+                                <td><%= audiencia.hora %></td>
+                                <td>
+                                    <% let statusClass = '';
+                                    switch(audiencia.estado) {
+                                        case 'aprobada':
+                                            statusClass = 'status-approved';
+                                            break;
+                                        case 'pendiente':
+                                            statusClass = 'status-pending';
+                                            break;
+                                        case 'completada':
+                                            statusClass = 'status-completed';
+                                            break;
+                                        case 'cancelada':
+                                            statusClass = 'status-canceled';
+                                            break;
+                                    } %>
+                                    <span class="status <%= statusClass %>"><%= audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1) %></span>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No hay audiencias creadas</td>
+                            </tr>
+                        <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- Scripts base para el dashboard -->    
+
+    <!-- Scripts base -->
     <script>
         // Mostrar fecha actual
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const today = new Date();
         document.getElementById('currentDate').textContent = today.toLocaleDateString('es-ES', options);
-        
-        // Manejar el cierre de sesión
-        document.getElementById('logoutBtn').addEventListener('click', function () {
-            // Eliminar token y datos del usuario del localStorage
-            localStorage.removeItem('token');
-            localStorage.removeItem('userName');
-            localStorage.removeItem('userRole');
-            localStorage.removeItem('userId');
-            
-            // Eliminar la cookie de token
-            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict';
-            
-            // Redirigir al login
-            window.location.href = '/auth/login';
-        });
-        
-        document.addEventListener('DOMContentLoaded', function () {
-            // Función para marcar el enlace activo en el menú lateral
-            function marcarEnlaceActivo() {
-                // Obtener la ruta actual
-                const rutaActual = window.location.pathname;
-                
-                // Eliminar la clase 'active' de todos los enlaces
-                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
-                    enlace.classList.remove('active');
-                });
-                
-                // Añadir la clase 'active' al enlace correspondiente a la ruta actual
-                document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
-                    if (enlace.getAttribute('href') === rutaActual) {
-                        enlace.classList.add('active');
-                    }
-                });
-            }
-            
-            // Ejecutar la función al cargar la página
-            marcarEnlaceActivo();
-        });
     </script>
     
     <!-- Script específico para el dashboard de abogado -->
@@ -402,11 +383,8 @@
                 
                 <div id="modalCasoContent" style="display: none;">
                     <div class="caso-header">
-                        <div>
-                            <h1 id="casoTitulo">Cargando título...</h1>
-                            <div class="caso-expediente" id="casoExpediente">Expediente: Cargando...</div>
-                        </div>
-                        <div class="caso-estado" id="casoEstadoBadge">Cargando...</div>
+                        <h2 id="casoTitulo">Cargando...</h2>
+                        <span class="status" id="casoEstado">Cargando...</span>
                     </div>
                     
                     <div class="caso-grid">

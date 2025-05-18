@@ -42,6 +42,21 @@ exports.renderDashboard = async (req, res) => {
         })
         .limit(3);
         
+        // Obtener audiencias creadas por el abogado (todas)
+        const audienciasCreadas = await Audiencia.find({
+            abogadoId
+        })
+        .sort({ fechaCreacion: -1 })
+        .populate({
+            path: 'casoId',
+            select: 'numeroExpediente clienteId tipo titulo',
+            populate: {
+                path: 'clienteId',
+                select: 'nombre apellido'
+            }
+        })
+        .limit(5);
+        
         // Obtener la fecha de la próxima audiencia
         const proximaAudiencia = audiencias.length > 0 ? audiencias[0].fecha : new Date();
 
@@ -63,6 +78,7 @@ exports.renderDashboard = async (req, res) => {
             user: req.user,
             casos: casosRecientes,
             audiencias,
+            audienciasCreadas,
             estadisticas: {
                 casosActivos,
                 proximaAudiencia: proximaAudiencia.toLocaleDateString(),

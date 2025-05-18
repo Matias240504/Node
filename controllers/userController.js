@@ -1,4 +1,4 @@
-const User = require('../models/UserModel'); // Asegúrate de que la ruta sea correcta
+const User = require('../models/userModel'); // Asegúrate de que la ruta sea correcta
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 

@@ -1,0 +1,26 @@
+<!-- Sidebar -->
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h1>Sistema Legal</h1>
+    </div>
+    
+    <ul class="sidebar-menu">
+        <li><a href="/abogado/dashboard" class="<%= currentPath === '/abogado/dashboard' ? 'active' : '' %>"><i class="fas fa-home"></i> Inicio</a></li>
+        <li><a href="/abogado/casos" class="<%= currentPath === '/abogado/casos' ? 'active' : '' %>"><i class="fas fa-gavel"></i> Casos</a></li>
+        <li><a href="/abogado/crearAudiencia" class="<%= currentPath === '/abogado/crearAudiencia' ? 'active' : '' %>"><i class="fas fa-users"></i> Crear Audiencia</a></li>
+        <li><a href="/abogado/audiencias" class="<%= currentPath === '/abogado/audiencias' ? 'active' : '' %>"><i class="fas fa-calendar-alt"></i> Audiencias</a></li>
+        <!--<li><a href="/abogado/documentos" class="<%= currentPath === '/abogado/documentos' ? 'active' : '' %>"><i class="fas fa-file-alt"></i> Documentos</a></li>-->
+        <!--<li><a href="/abogado/reportes" class="<%= currentPath === '/abogado/reportes' ? 'active' : '' %>"><i class="fas fa-chart-bar"></i> Reportes</a></li>-->
+    </ul>
+    
+    <div class="user-info">
+        <div class="user-avatar">
+            <i class="fas fa-user"></i>
+        </div>
+        <div>
+            <div id="userName"><%= user.nombre %></div>
+            <small id="userRole">Abogado</small>
+        </div>
+        <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+    </div>
+</div>

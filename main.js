@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken'); // Importar JWT
 const userRoutes = require('./routers/userRouter');
 const casoRoutes = require('./routers/casoRoutes');
 const abogadoRoutes = require('./routers/abogadoRoutes'); // Importar nuevas rutas para abogado
+const juezRoutes = require('./routers/juezRoutes'); // Importar rutas para juez
 const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
@@ -48,6 +49,7 @@ app.use((err, req, res, next) => {
 app.use('/api/users', userRoutes);
 app.use('/api/casos', casoRoutes);
 app.use('/abogado', abogadoRoutes); // Añadir rutas de abogado
+app.use('/juez', juezRoutes); // Usar las rutas de juez
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
@@ -99,6 +101,4 @@ app.get('/chat', (req, res) => {
 
 // La ruta /abogado/dashboard ahora es manejada por el controlador en abogadoRoutes.js
 
-app.get('/juez/dashboard', verifyViewToken, viewAllowRoles('juez'), (req, res) => {
-    res.render('juez/dashboard', { user: req.user });
-});
+// La ruta /juez/dashboard ahora es manejada por el controlador en juezRoutes.js

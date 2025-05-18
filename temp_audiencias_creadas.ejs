@@ -1,0 +1,87 @@
+<!-- Audiencias Creadas -->
+<div class="section">
+    <div class="section-header">
+        <h3 class="section-title">Audiencias Creadas</h3>
+        <a href="/abogado/audiencias"><button>Ver todas <i class="fas fa-arrow-right"></i></button></a>
+    </div>
+    
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Caso #</th>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Fecha</th>
+                    <th>Hora</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody>
+            <% if (audienciasCreadas && audienciasCreadas.length > 0) { %>
+                <% audienciasCreadas.forEach(function(audiencia) { %>
+                <tr>
+                    <td><%= audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible' %></td>
+                    <td><%= audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado' %></td>
+                    <td>
+                        <% 
+                        let tipoFormateado = '';
+                        switch(audiencia.tipo) {
+                            case 'inicial':
+                                tipoFormateado = 'Inicial';
+                                break;
+                            case 'seguimiento':
+                                tipoFormateado = 'Seguimiento';
+                                break;
+                            case 'presentacion_pruebas':
+                                tipoFormateado = 'Presentación de Pruebas';
+                                break;
+                            case 'testimonio':
+                                tipoFormateado = 'Testimonio';
+                                break;
+                            case 'alegatos':
+                                tipoFormateado = 'Alegatos';
+                                break;
+                            case 'sentencia':
+                                tipoFormateado = 'Sentencia';
+                                break;
+                            case 'otro':
+                                tipoFormateado = 'Otro';
+                                break;
+                            default:
+                                tipoFormateado = audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1);
+                        }
+                        %>
+                        <%= tipoFormateado %>
+                    </td>
+                    <td><%= new Date(audiencia.fecha).toLocaleDateString() %></td>
+                    <td><%= audiencia.hora %></td>
+                    <td>
+                        <% let statusClass = '';
+                        switch(audiencia.estado) {
+                            case 'aprobada':
+                                statusClass = 'status-approved';
+                                break;
+                            case 'pendiente':
+                                statusClass = 'status-pending';
+                                break;
+                            case 'completada':
+                                statusClass = 'status-completed';
+                                break;
+                            case 'cancelada':
+                                statusClass = 'status-canceled';
+                                break;
+                        } %>
+                        <span class="status <%= statusClass %>"><%= audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1) %></span>
+                    </td>
+                </tr>
+                <% }); %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6" style="text-align: center;">No hay audiencias creadas</td>
+                </tr>
+            <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>

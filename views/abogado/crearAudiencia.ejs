@@ -1,288 +1,13 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Crear Audiencia | Sistema Legal</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #2c3e50;
-            --secondary-color: #3498db;
-            --accent-color: #e74c3c;
-            --light-color: #ecf0f1;
-            --dark-color: #34495e;
-            --success-color: #2ecc71;
-            --warning-color: #f39c12;
-        }
-        
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
-            color: #333;
-        }
-        
-        .dashboard-container {
-            display: flex;
-            min-height: 100vh;
-        }
-        
-        /* Sidebar Styles */
-        .sidebar {
-            width: 250px;
-            background-color: var(--primary-color);
-            color: white;
-            padding: 20px 0;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-        }
-        
-        .sidebar-header {
-            padding: 0 20px 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            text-align: center;
-        }
-        
-        .sidebar-header h3 {
-            font-size: 1.5rem;
-            margin-bottom: 5px;
-        }
-        
-        .sidebar-header p {
-            font-size: 0.9rem;
-            opacity: 0.7;
-        }
-        
-        .sidebar-menu {
-            list-style: none;
-            padding: 20px 0;
-            flex-grow: 1;
-        }
-        
-        .sidebar-menu li {
-            margin-bottom: 5px;
-        }
-        
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            padding: 12px 20px;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            transition: all 0.3s;
-        }
-        
-        .sidebar-menu a:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-            color: white;
-        }
-        
-        .sidebar-menu a.active {
-            background-color: var(--secondary-color);
-            color: white;
-            border-left: 4px solid white;
-        }
-        
-        .sidebar-menu i {
-            margin-right: 10px;
-            width: 20px;
-            text-align: center;
-        }
-        
-        .user-info {
-            padding: 15px 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-        }
-        
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 10px;
-        }
-        
-        #userName {
-            font-weight: 500;
-        }
-        
-        #userRole {
-            font-size: 0.8rem;
-            opacity: 0.7;
-        }
-        
-        .logout-btn {
-            margin-left: auto;
-            background: none;
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1.1rem;
-        }
-        
-        /* Main Content Styles */
-        .main-content {
-            flex: 1;
-            padding: 20px;
-            margin-left: 250px;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #ddd;
-        }
-        
-        .page-title {
-            font-size: 1.8rem;
-            color: var(--dark-color);
-        }
-        
-        /* Form Styles */
-        .form-container {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 25px;
-            margin-bottom: 20px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--dark-color);
-        }
-        
-        .form-control {
-            width: 100%;
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .form-control:focus {
-            border-color: var(--secondary-color);
-            outline: none;
-        }
-        
-        select.form-control {
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
-            background-repeat: no-repeat;
-            background-position: right 10px center;
-            background-size: 1em;
-        }
-        
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: var(--secondary-color);
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: background-color 0.3s;
-        }
-        
-        .btn:hover {
-            background-color: #2980b9;
-        }
-        
-        .btn-primary {
-            background-color: var(--secondary-color);
-        }
-        
-        .btn-success {
-            background-color: var(--success-color);
-        }
-        
-        .btn-danger {
-            background-color: var(--accent-color);
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 20px;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-        }
-        
-        .alert {
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            display: none;
-        }
-        
-        .alert-success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .alert-danger {
-            background-color: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-    </style>
+    <%- include('./partials/styles', {title: 'Crear Audiencia'}) %>
+    <!-- No se necesitan estilos adicionales, todos están en los archivos CSS externos -->
 </head>
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h3>Sistema Legal</h3>
-                <p>Panel de Abogado</p>
-            </div>
-            
-            <ul class="sidebar-menu">
-                <li><a href="/abogado/dashboard"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="/abogado/casos"><i class="fas fa-gavel"></i> Casos</a></li>
-                <li><a href="/abogado/crearAudiencia" class="active"><i class="fas fa-users"></i> Crear Audiencia</a></li>
-                <li><a href="/abogado/audiencias"><i class="fas fa-calendar-alt"></i> Audiencias</a></li>
-                <li><a href="/abogado/documentos"><i class="fas fa-file-alt"></i> Documentos</a></li>
-                <li><a href="/abogado/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
-            </ul>
-            
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div>
-                    <div id="userName"><%= user.nombre %></div>
-                    <small id="userRole">Abogado</small>
-                </div>
-                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </div>
+        <%- include('./partials/sidebar', {currentPath: '/abogado/crearAudiencia'}) %>
         
         <!-- Main Content -->
         <div class="main-content">
@@ -291,65 +16,73 @@
             </div>
             
             <div class="alert alert-success" id="success-alert">
-                Audiencia creada exitosamente.
+                <i class="fas fa-check-circle"></i> Audiencia creada exitosamente. Redirigiendo a la lista de audiencias...
             </div>
             
             <div class="alert alert-danger" id="error-alert">
-                Error al crear la audiencia.
+                <i class="fas fa-exclamation-triangle"></i> Error al crear la audiencia. Por favor, intente nuevamente.
             </div>
             
-            <div class="form-container">
-                <form id="audienciaForm">
-                    <div class="form-group">
-                        <label for="caso-select">Seleccionar Caso (Estado: Aceptado)</label>
-                        <select id="caso-select" name="casoId" class="form-control" required>
-                            <option value="" disabled selected>Cargando casos...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sala-select">Seleccionar Sala (Disponible)</label>
-                        <select id="sala-select" name="salaId" class="form-control" required>
-                            <option value="" disabled selected>Cargando salas...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="tipo-select">Tipo de Audiencia</label>
-                        <select id="tipo-select" name="tipo" class="form-control" required>
-                            <option value="" disabled selected>Seleccione un tipo</option>
-                            <option value="inicial">Inicial</option>
-                            <option value="seguimiento">Seguimiento</option>
-                            <option value="presentacion_pruebas">Presentación de Pruebas</option>
-                            <option value="testimonio">Testimonio</option>
-                            <option value="alegatos">Alegatos</option>
-                            <option value="sentencia">Sentencia</option>
-                            <option value="otro">Otro</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-row">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-calendar-plus"></i> Formulario de Nueva Audiencia</h3>
+                </div>
+                <div class="card-body">
+                    <form id="audienciaForm" class="audiencia-form">
                         <div class="form-group">
-                            <label for="fecha-input">Fecha</label>
-                            <input type="date" id="fecha-input" name="fecha" class="form-control" required>
+                            <label for="caso-select">Seleccionar Caso (Estado: Aceptado)</label>
+                            <select id="caso-select" name="casoId" required>
+                                <option value="" disabled selected>Cargando casos...</option>
+                            </select>
+                            <small class="form-text text-muted">Solo se muestran casos en estado 'aceptado'</small>
                         </div>
                         
                         <div class="form-group">
-                            <label for="hora-input">Hora</label>
-                            <input type="time" id="hora-input" name="hora" class="form-control" required>
+                            <label for="sala-select">Seleccionar Sala (Disponible)</label>
+                            <select id="sala-select" name="salaId" required>
+                                <option value="" disabled selected>Cargando salas...</option>
+                            </select>
+                            <small class="form-text text-muted">Solo se muestran salas con disponibilidad</small>
                         </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="descripcion-textarea">Descripción</label>
-                        <textarea id="descripcion-textarea" name="descripcion" class="form-control" rows="4" required></textarea>
-                    </div>
-                    
-                    <div class="form-group">
-                        <button type="submit" class="btn btn-primary">Crear Audiencia</button>
-                        <a href="/abogado/audiencias" class="btn btn-danger" style="margin-left: 10px;">Cancelar</a>
-                    </div>
-                </form>
+                        
+                        <div class="form-group">
+                            <label for="tipo-select">Tipo de Audiencia</label>
+                            <select id="tipo-select" name="tipo" required>
+                                <option value="" disabled selected>Seleccione un tipo</option>
+                                <option value="inicial">Inicial</option>
+                                <option value="seguimiento">Seguimiento</option>
+                                <option value="presentacion_pruebas">Presentación de Pruebas</option>
+                                <option value="testimonio">Testimonio</option>
+                                <option value="alegatos">Alegatos</option>
+                                <option value="sentencia">Sentencia</option>
+                                <option value="otro">Otro</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fecha-input">Fecha</label>
+                                <input type="date" id="fecha-input" name="fecha" required>
+                                <small class="form-text text-muted">Fecha mínima: hoy</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="hora-input">Hora</label>
+                                <input type="time" id="hora-input" name="hora" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="descripcion-textarea">Descripción</label>
+                            <textarea id="descripcion-textarea" name="descripcion" rows="4" required placeholder="Ingrese una descripción detallada de la audiencia..."></textarea>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Crear Audiencia</button>
+                            <a href="/abogado/audiencias" class="btn btn-danger"><i class="fas fa-times"></i> Cancelar</a>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
@@ -476,12 +209,10 @@
                 });
             });
             
-            // Manejar logout
-            logoutBtn.addEventListener('click', function() {
-                localStorage.removeItem('token');
-                window.location.href = '/auth/login';
-            });
         });
     </script>
+    
+    <!-- Scripts comunes -->
+    <%- include('../partials/scripts') %>
 </body>
 </html>

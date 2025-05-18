@@ -5,12 +5,12 @@ const { verifyToken, allowRoles } = require('../middlewares/authMiddleware');
 
 // Procesar registro
 router.post('/registro', userController.register);
-
+    
 // Ruta de login
 router.post('/login', userController.login);
 
 // Ruta solo para jueces
-router.get('/admin', verifyToken, allowRoles('juez'), (req, res) => {
+router.get('/juez', verifyToken, allowRoles('juez'), (req, res) => {
     res.json({ message: 'Acceso solo para jueces', user: req.user });
 });
 

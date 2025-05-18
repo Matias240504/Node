@@ -1,0 +1,167 @@
+/* Estilos comunes para todas las vistas */
+
+/* Ajustes para el contenido principal con la barra lateral */
+.main-content {
+    flex: 1;
+    padding: 20px;
+    margin-left: 240px;
+}
+
+/* Estilos para formularios específicos */
+.form-container {
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    padding: 25px;
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+/* Estilos para alertas */
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    display: none;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Estilos para tarjetas */
+.card {
+    background-color: white;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+}
+
+.card-header {
+    padding: 1rem 1.5rem;
+    background-color: var(--light-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-title {
+    margin: 0;
+    font-size: 1.25rem;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Estilos para textos de ayuda */
+.form-text {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-top: 0.25rem;
+}
+
+/* Correcciones para los títulos (de titleFixes.css) */
+.section-title, 
+.page-title,
+.page-header h2 {
+    color: var(--text-dark) !important;
+}
+
+.sidebar-header h1 {
+    color: white !important;
+}
+
+table th {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Mejoras para los botones (de buttonFixes.css) */
+.section-header {
+    position: relative;
+    padding-right: 20px;
+}
+
+#refreshCasesBtn {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+button[type="submit"].save-button {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    margin: 0;
+}
+
+.section-header button:hover,
+.section-header button:focus,
+button.save-button:hover,
+button.save-button:focus,
+#refreshCasesBtn:hover,
+#refreshCasesBtn:focus,
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--primary-hover, #1565c0) !important;
+    color: white !important;
+}
+
+.section-title {
+    margin-right: 150px; /* Espacio para el botón */
+}
+
+/* Estilos responsivos */
+@media (max-width: 768px) {
+    .main-content {
+        margin-left: 70px;
+    }
+    
+    .form-row {
+        flex-direction: column;
+        gap: 0;
+    }
+    
+    .section-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    #refreshCasesBtn,
+    button[type="submit"].save-button {
+        position: static;
+        transform: none;
+        margin-top: 10px;
+    }
+    
+    .section-title {
+        margin-right: 0;
+    }
+}
