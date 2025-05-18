@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/UserModel');
+const User = require('../models/userModel');
 require('dotenv').config();
 
 // Middleware para verificar token en rutas de vistas

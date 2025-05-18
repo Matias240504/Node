@@ -1,17 +1,22 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/UserModel');
+const User = require('../models/userModel');
 require('dotenv').config();
 
 const verifyToken = async (req, res, next) => {
+    // Obtener token de múltiples fuentes: cookies, query string, o headers
     const authHeader = req.headers.authorization;
     console.log('Auth Header:', authHeader);
-
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    
+    // Intentar obtener el token de varias fuentes
+    const token = req.cookies?.token || 
+                 req.query.token || 
+                 (authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null);
+                 
+    console.log('Token recibido:', token ? 'Token presente' : 'Token ausente');
+    
+    if (!token) {
         return res.status(401).json({ message: 'Token no proporcionado' });
     }
-
-    const token = authHeader.split(' ')[1];
-    console.log('Token recibido:', token);
 
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);

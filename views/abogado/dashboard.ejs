@@ -8,8 +8,73 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/styles.css" />
     <link rel="stylesheet" href="/css/dashboardAbogado.css" />
+    <link rel="stylesheet" href="/css/modalDetalleCaso.css" />
     <style>
         /* Estilos adicionales para el dashboard del abogado */
+        .btn-detalle {
+            padding: 8px 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-detalle:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-detalle:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-detalle i {
+            font-size: 0.8rem;
+        }
+        
+        .btn-link {
+            padding: 8px 12px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+        }
+        
+        .btn-link:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+            color: white;
+            text-decoration: none;
+        }
+        
+        .btn-link:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-link i {
+            font-size: 0.8rem;
+        }
         .user-info {
             margin-top: auto;
             padding-top: var(--spacing-md);
@@ -44,6 +109,26 @@
         .logout-btn:hover {
             color: white;
         }
+        
+        /* Estilos para insignias de asignación */
+        .assigned-badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 4px 10px;
+            font-size: 0.7rem;
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+            border-radius: 10px;
+            font-weight: 600;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        
+        .assigned-badge.other {
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+        }
     </style>
 </head>
 <body>
@@ -56,7 +141,7 @@
             
             <ul class="sidebar-menu">
                 <li><a href="/abogado/dashboard" class="active"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="/abogado/casos" id="casos-link"><i class="fas fa-gavel"></i> Casos Asignados</a></li>
+                <li><a href="/abogado/casos" id="casos-link"><i class="fas fa-gavel"></i> Casos</a></li>
                 <li><a href="/abogado/clientes" id="clientes-link"><i class="fas fa-users"></i> Clientes</a></li>
                 <li><a href="/abogado/audiencias" id="audiencias-link"><i class="fas fa-calendar-alt"></i> Audiencias</a></li>
                 <li><a href="/abogado/documentos" id="documentos-link"><i class="fas fa-file-alt"></i> Documentos</a></li>
@@ -93,19 +178,19 @@
                             <i class="fas fa-briefcase"></i>
                         </div>
                     </div>
-                    <div class="card-value">18</div>
-                    <div class="card-description">3 casos nuevos esta semana</div>
+                    <div class="card-value"><%= estadisticas.casosActivos %></div>
+                    <div class="card-description">Casos en estado aceptado o iniciado</div>
                 </div>
                 
                 <div class="card">
                     <div class="card-header">
-                        <h3 class="card-title">Audiencias Pendientes</h3>
-                        <div class="card-icon" style="background-color: var(--warning-color);">
-                            <i class="fas fa-gavel"></i>
+                        <h3 class="card-title">Próxima Audiencia</h3>
+                        <div class="card-icon" style="background-color: var(--primary-color);">
+                            <i class="fas fa-calendar-check"></i>
                         </div>
                     </div>
-                    <div class="card-value">5</div>
-                    <div class="card-description">Próxima: 18 de Mayo, 2025</div>
+                    <div class="card-value">1</div>
+                    <div class="card-description">Próxima: <%= estadisticas.proximaAudiencia %></div>
                 </div>
                 
                 <div class="card">
@@ -115,8 +200,8 @@
                             <i class="fas fa-file-alt"></i>
                         </div>
                     </div>
-                    <div class="card-value">87</div>
-                    <div class="card-description">9 pendientes de revisión</div>
+                    <div class="card-value"><%= estadisticas.totalDocumentos %></div>
+                    <div class="card-description">Total de documentos</div>
                 </div>
                 
                 <div class="card">
@@ -134,8 +219,8 @@
             <!-- Recent Cases -->
             <div class="section">
                 <div class="section-header">
-                    <h3 class="section-title">Casos Asignados</h3>
-                    <button>Ver todos</button>
+                    <h3 class="section-title">Casos Recientes</h3>
+                    <a href="/abogado/casos"><button>Ver todos <i class="fas fa-arrow-right"></i></button></a>
                 </div>
                 
                 <div class="table-container">
@@ -151,46 +236,39 @@
                             </tr>
                         </thead>
                         <tbody>
+                        <% if (casos && casos.length > 0) { %>
+                            <% casos.forEach(function(caso) { %>
                             <tr>
-                                <td>C-2025-042</td>
-                                <td>María González</td>
-                                <td>Divorcio</td>
-                                <td>10/05/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                                <td><%= caso.numeroExpediente %></td>
+                                <td><%= caso.clienteId ? caso.clienteId.nombre + ' ' + caso.clienteId.apellido : 'No asignado' %></td>
+                                <td><%= caso.tipo.charAt(0).toUpperCase() + caso.tipo.slice(1).replace('_', ' ') %></td>
+                                <td><%= new Date(caso.fechaRegistro).toLocaleDateString() %></td>
+                                <td>
+                                    <% let statusClass = 'status-' + caso.estado;
+                                    let assignedBadge = '';
+                                    
+                                    // Mostrar si tiene abogado asignado
+                                    if (caso.abogadoId) {
+                                        if (caso.abogadoId._id === user.id) {
+                                            assignedBadge = '<span class="assigned-badge">Asignado a mí</span>';
+                                        } else {
+                                            assignedBadge = `<span class="assigned-badge other">Asignado a ${caso.abogadoId.nombre}</span>`;
+                                        }
+                                    }
+                                    %>
+                                    <span class="status <%= statusClass %>"><%= caso.estado.charAt(0).toUpperCase() + caso.estado.slice(1) %></span>
+                                </td>
+                                <td>
+                                    <a href="/abogado/casos" class="btn-link"><i class="fas fa-list"></i> Ver en casos</a>
+                                </td>
                             </tr>
+                            <% }); %>
+                        <% } else { %>
                             <tr>
-                                <td>C-2025-041</td>
-                                <td>Juan Pérez</td>
-                                <td>Contrato Laboral</td>
-                                <td>05/05/2025</td>
-                                <td><span class="status status-pending">Pendiente</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                                <td colspan="6" style="text-align: center;">No hay casos disponibles</td>
+                                <td colspan="5" style="text-align: center;">No hay casos disponibles</td>
                             </tr>
-                            <tr>
-                                <td>C-2025-039</td>
-                                <td>Empresa XYZ</td>
-                                <td>Propiedad Intelectual</td>
-                                <td>28/04/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
-                            </tr>
-                            <tr>
-                                <td>C-2025-036</td>
-                                <td>Roberto Sánchez</td>
-                                <td>Herencia</td>
-                                <td>15/04/2025</td>
-                                <td><span class="status status-closed">Cerrado</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
-                            </tr>
-                            <tr>
-                                <td>C-2025-035</td>
-                                <td>Laura Martínez</td>
-                                <td>Inmobiliario</td>
-                                <td>10/04/2025</td>
-                                <td><span class="status status-active">Activo</span></td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
-                            </tr>
+                        <% } %>
                         </tbody>
                     </table>
                 </div>
@@ -200,7 +278,7 @@
             <div class="section">
                 <div class="section-header">
                     <h3 class="section-title">Próximas Audiencias</h3>
-                    <button>Ver todas</button>
+                    <a href="/abogado/audiencias"><button>Ver todas <i class="fas fa-arrow-right"></i></button></a>
                 </div>
                 
                 <div class="table-container">
@@ -212,34 +290,43 @@
                                 <th>Tipo</th>
                                 <th>Fecha</th>
                                 <th>Hora</th>
-                                <th>Acciones</th>
+                                <th>Estado</th>
                             </tr>
                         </thead>
                         <tbody>
+                        <% if (audiencias && audiencias.length > 0) { %>
+                            <% audiencias.forEach(function(audiencia) { %>
                             <tr>
-                                <td>C-2025-041</td>
-                                <td>Juan Pérez</td>
-                                <td>Contrato Laboral</td>
-                                <td>18/05/2025</td>
-                                <td>10:00 AM</td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                                <td><%= audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible' %></td>
+                                <td><%= audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado' %></td>
+                                <td><%= audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1) %></td>
+                                <td><%= new Date(audiencia.fecha).toLocaleDateString() %></td>
+                                <td><%= audiencia.hora %></td>
+                                <td>
+                                    <% let statusClass = '';
+                                    switch(audiencia.estado) {
+                                        case 'aprobada':
+                                            statusClass = 'status-active';
+                                            break;
+                                        case 'pendiente':
+                                            statusClass = 'status-pending';
+                                            break;
+                                        case 'completada':
+                                            statusClass = 'status-completed';
+                                            break;
+                                        case 'cancelada':
+                                            statusClass = 'status-canceled';
+                                            break;
+                                    } %>
+                                    <span class="status <%= statusClass %>"><%= audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1) %></span>
+                                </td>
                             </tr>
+                            <% }); %>
+                        <% } else { %>
                             <tr>
-                                <td>C-2025-042</td>
-                                <td>María González</td>
-                                <td>Divorcio</td>
-                                <td>20/05/2025</td>
-                                <td>11:30 AM</td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
+                                <td colspan="6" style="text-align: center;">No hay audiencias programadas</td>
                             </tr>
-                            <tr>
-                                <td>C-2025-039</td>
-                                <td>Empresa XYZ</td>
-                                <td>Propiedad Intelectual</td>
-                                <td>22/05/2025</td>
-                                <td>09:00 AM</td>
-                                <td><a href="#"><i class="fas fa-eye"></i></a></td>
-                            </tr>
+                        <% } %>
                         </tbody>
                     </table>
                 </div>
@@ -247,6 +334,10 @@
         </div>
     </div>
     
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Scripts base para el dashboard -->    
     <script>
         // Mostrar fecha actual
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
@@ -289,6 +380,112 @@
             
             // Ejecutar la función al cargar la página
             marcarEnlaceActivo();
+        });
+    </script>
+    
+    <!-- Script específico para el dashboard de abogado -->
+    <script src="/js/dashboardAbogado.js"></script>
+    <!-- Modal de Detalle de Caso -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 class="modal-title">Detalle del Caso</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-loading-spinner" id="modalLoadingSpinner">
+                    <div class="spinner"></div>
+                    <p>Cargando información del caso...</p>
+                </div>
+                
+                <div id="modalCasoContent" style="display: none;">
+                    <div class="caso-header">
+                        <div>
+                            <h1 id="casoTitulo">Cargando título...</h1>
+                            <div class="caso-expediente" id="casoExpediente">Expediente: Cargando...</div>
+                        </div>
+                        <div class="caso-estado" id="casoEstadoBadge">Cargando...</div>
+                    </div>
+                    
+                    <div class="caso-grid">
+                        <div class="caso-info">
+                            <div class="caso-info-header">
+                                <h2>Información del Caso</h2>
+                                <span class="badge" id="casoPrioridad">Cargando...</span>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Descripción</h3>
+                                <p id="casoDescripcion">Cargando...</p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Tipo de Caso</h3>
+                                <p id="casoTipo">Cargando...</p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Cliente</h3>
+                                <p id="casoCliente">Cargando...</p>
+                                <p id="casoClienteContacto">Cargando...</p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Fechas</h3>
+                                <p>Registro: <span id="casoFechaRegistro">Cargando...</span></p>
+                                <p>Última actualización: <span id="casoFechaActualizacion">Cargando...</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>Archivos Adjuntos</h3>
+                                <ul class="archivos-list" id="casoArchivos">
+                                    <li>Cargando archivos...</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="caso-actions">
+                            <div class="action-section">
+                                <h3>Cambiar Estado del Caso</h3>
+                                <select id="estadoSelector" class="estado-selector">
+                                    <option value="enviado">Enviado</option>
+                                    <option value="aceptado">Aceptado</option>
+                                    <option value="denegado">Denegado</option>
+                                    <option value="iniciado">Iniciado</option>
+                                    <option value="finalizado">Finalizado</option>
+                                </select>
+                                <button id="btnCambiarEstado" class="action-btn">Actualizar Estado</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="comentarios-section">
+                        <div class="comentarios-header">
+                            <h2>Notas y Comentarios</h2>
+                        </div>
+                        
+                        <div class="comentario-form">
+                            <textarea id="nuevoComentario" placeholder="Escribe una nueva nota o comentario..."></textarea>
+                            <button id="btnAgregarComentario" class="action-btn">Agregar Nota</button>
+                        </div>
+                        
+                        <div class="comentarios-list" id="comentariosList">
+                            <p class="text-center">Cargando comentarios...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Script para el modal de detalle de caso -->
+    <script src="/js/detalleCasoModal.js"></script>
+    
+    <script>
+        // Agregar evento click para botones de detalle (delegación de eventos)
+        $(document).on('click', '.btn-detalle', function() {
+            const casoId = $(this).data('id');
+            window.abrirDetalleCaso(casoId);
         });
     </script>
 </body>

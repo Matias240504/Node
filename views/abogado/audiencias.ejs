@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sistema Legal - Audiencias del Abogado</title>
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="/css/styles.css" />
+    <link rel="stylesheet" href="/css/dashboardAbogado.css" />
+    <style>
+        /* Estilos específicos para la página de audiencias */
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-item label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-secondary-color);
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        
+        .filter-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .apply-filter {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .reset-filter {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+        }
+        
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background-color: var(--light-color);
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Estado de carga */
+        .loading-indicator {
+            display: none;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .loading-indicator.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Contador de resultados */
+        .results-counter {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+        
+        /* Estilos adicionales para audiencias */
+        .status.status-canceled {
+            background-color: #dc3545;
+        }
+        
+        .status.status-pending {
+            background-color: #ffc107;
+            color: #333;
+        }
+        
+        .status.status-approved,
+        .status.status-aprobada {
+            background-color: #198754;
+        }
+        
+        .status.status-completed {
+            background-color: #6c757d;
+        }
+        
+        .date-filter-container {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h1>Sistema Legal</h1>
+            </div>
+            
+            <ul class="sidebar-menu">
+                <li><a href="/abogado/dashboard"><i class="fas fa-home"></i> Inicio</a></li>
+                <li><a href="/abogado/casos"><i class="fas fa-gavel"></i> Casos</a></li>
+                <li><a href="/abogado/clientes"><i class="fas fa-users"></i> Clientes</a></li>
+                <li><a href="/abogado/audiencias" class="active"><i class="fas fa-calendar-alt"></i> Audiencias</a></li>
+                <li><a href="/abogado/documentos"><i class="fas fa-file-alt"></i> Documentos</a></li>
+                <li><a href="/abogado/reportes"><i class="fas fa-chart-bar"></i> Reportes</a></li>
+            </ul>
+            
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div>
+                    <div id="userName"><%= user.nombre %></div>
+                    <small id="userRole">Abogado</small>
+                </div>
+                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Audiencias</h2>
+                <div>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="filters-container">
+                <div class="filter-item">
+                    <label for="estado-filter">Estado</label>
+                    <select id="estado-filter">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="aprobada">Aprobada</option>
+                        <option value="completada">Completada</option>
+                        <option value="cancelada">Cancelada</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="tipo-filter">Tipo de Audiencia</label>
+                    <select id="tipo-filter">
+                        <option value="">Todos</option>
+                        <option value="inicial">Inicial</option>
+                        <option value="seguimiento">Seguimiento</option>
+                        <option value="presentacion_pruebas">Presentación de Pruebas</option>
+                        <option value="testimonio">Testimonio</option>
+                        <option value="alegatos">Alegatos</option>
+                        <option value="sentencia">Sentencia</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item date-filter-container">
+                    <div>
+                        <label for="desde-date">Desde</label>
+                        <input type="date" id="desde-date">
+                    </div>
+                    <div>
+                        <label for="hasta-date">Hasta</label>
+                        <input type="date" id="hasta-date">
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="apply-filter" id="apply-filters">
+                        <i class="fas fa-search"></i> Aplicar Filtros
+                    </button>
+                    <button class="reset-filter" id="reset-filters">
+                        <i class="fas fa-undo"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+            
+            <div class="results-counter" id="results-counter">Mostrando 0 audiencias</div>
+            
+            <!-- Indicador de carga -->
+            <div class="loading-indicator" id="loading-indicator">
+                <div class="spinner"></div>
+            </div>
+            
+            <!-- Tabla de Audiencias -->
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Caso #</th>
+                            <th>Cliente</th>
+                            <th>Tipo</th>
+                            <th>Fecha</th>
+                            <th>Hora</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody id="audiencias-tbody">
+                        <!-- Los datos se cargarán dinámicamente con JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Paginación -->
+            <div class="pagination" id="pagination">
+                <!-- Los elementos de paginación se generarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts base -->
+    <script>
+        // Mostrar fecha actual
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const today = new Date();
+        document.getElementById('currentDate').textContent = today.toLocaleDateString('es-ES', options);
+        
+        // Manejar el cierre de sesión
+        document.getElementById('logoutBtn').addEventListener('click', function () {
+            localStorage.removeItem('token');
+            localStorage.removeItem('userName');
+            localStorage.removeItem('userRole');
+            localStorage.removeItem('userId');
+            document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT; secure; samesite=strict';
+            window.location.href = '/auth/login';
+        });
+        
+        // Marcar enlace activo
+        document.addEventListener('DOMContentLoaded', function() {
+            const rutaActual = window.location.pathname;
+            document.querySelectorAll('.sidebar-menu a').forEach(enlace => {
+                enlace.classList.remove('active');
+                if (enlace.getAttribute('href') === rutaActual) {
+                    enlace.classList.add('active');
+                }
+            });
+        });
+    </script>
+    
+    <!-- Script específico para la página de audiencias -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Referencias a elementos DOM
+            const audienciasTableBody = document.getElementById('audiencias-tbody');
+            const paginationContainer = document.getElementById('pagination');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const resultsCounter = document.getElementById('results-counter');
+            
+            // Elementos de filtro
+            const estadoFilter = document.getElementById('estado-filter');
+            const tipoFilter = document.getElementById('tipo-filter');
+            const desdeDate = document.getElementById('desde-date');
+            const hastaDate = document.getElementById('hasta-date');
+            const applyFiltersBtn = document.getElementById('apply-filters');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            
+            // Variables para la paginación
+            let currentPage = 1;
+            const limit = 10;
+            
+            // Función para obtener el token de las cookies
+            function obtenerTokenDeCookie() {
+                const cookieValue = document.cookie
+                    .split('; ')
+                    .find(row => row.startsWith('token='));
+                return cookieValue ? cookieValue.split('=')[1] : null;
+            }
+            
+            // Función para formatear fechas en formato legible
+            function formatearFecha(fechaStr) {
+                const fecha = new Date(fechaStr);
+                return fecha.toLocaleDateString();
+            }
+            
+            // Función para cargar audiencias con paginación y filtros
+            async function cargarAudiencias(page = 1) {
+                // Mostrar indicador de carga
+                loadingIndicator.classList.add('active');
+                
+                try {
+                    // Construir URL con parámetros de filtro
+                    let url = `/abogado/api/audiencias?page=${page}&limit=${limit}`;
+                    
+                    // Añadir filtros si están seleccionados
+                    if (estadoFilter.value) url += `&estado=${estadoFilter.value}`;
+                    if (tipoFilter.value) url += `&tipo=${tipoFilter.value}`;
+                    if (desdeDate.value) url += `&desde=${desdeDate.value}`;
+                    if (hastaDate.value) url += `&hasta=${hastaDate.value}`;
+                    
+                    // Obtener token para autorización
+                    const token = obtenerTokenDeCookie();
+                    
+                    // Realizar petición a la API
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Actualizar la tabla con los resultados
+                    actualizarTablaAudiencias(data.audiencias);
+                    
+                    // Actualizar paginación
+                    actualizarPaginacion(data.pagination);
+                    
+                    // Actualizar contador de resultados
+                    resultsCounter.textContent = `Mostrando ${data.audiencias.length} de ${data.pagination.total} audiencias`;
+                    
+                } catch (error) {
+                    console.error('Error al cargar audiencias:', error);
+                    audienciasTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: red;">
+                                Error al cargar las audiencias. Intente de nuevo más tarde.
+                            </td>
+                        </tr>
+                    `;
+                } finally {
+                    // Ocultar indicador de carga
+                    loadingIndicator.classList.remove('active');
+                }
+            }
+            
+            // Función para actualizar la tabla de audiencias
+            function actualizarTablaAudiencias(audiencias) {
+                // Limpiar tabla
+                audienciasTableBody.innerHTML = '';
+                
+                if (audiencias && audiencias.length > 0) {
+                    // Generar filas de la tabla
+                    audiencias.forEach(audiencia => {
+                        // Determinar clase CSS para estado
+                        let statusClass = '';
+                        switch(audiencia.estado) {
+                            case 'aprobada':
+                                statusClass = 'status-approved';
+                                break;
+                            case 'pendiente':
+                                statusClass = 'status-pending';
+                                break;
+                            case 'completada':
+                                statusClass = 'status-completed';
+                                break;
+                            case 'cancelada':
+                                statusClass = 'status-canceled';
+                                break;
+                        }
+                        
+                        // Crear fila con datos de la audiencia
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible'}</td>
+                            <td>${audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado'}</td>
+                            <td>${audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1).replace('_', ' ')}</td>
+                            <td>${formatearFecha(audiencia.fecha)}</td>
+                            <td>${audiencia.hora}</td>
+                            <td><span class="status ${statusClass}">${audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1)}</span></td>
+                        `;
+                        
+                        audienciasTableBody.appendChild(row);
+                    });
+                } else {
+                    // Mostrar mensaje si no hay audiencias
+                    audienciasTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center;">
+                                No se encontraron audiencias con los filtros aplicados
+                            </td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            // Función para generar los elementos de paginación
+            function actualizarPaginacion(paginationData) {
+                paginationContainer.innerHTML = '';
+                
+                // Si solo hay una página, no mostrar paginación
+                if (paginationData.totalPages <= 1) return;
+                
+                // Botón "Anterior"
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = `<i class="fas fa-chevron-left"></i>`;
+                prevButton.disabled = !paginationData.hasPrevPage;
+                prevButton.addEventListener('click', () => {
+                    currentPage--;
+                    cargarAudiencias(currentPage);
+                });
+                paginationContainer.appendChild(prevButton);
+                
+                // Determinar rango de páginas a mostrar
+                let startPage = Math.max(1, paginationData.page - 2);
+                let endPage = Math.min(paginationData.totalPages, startPage + 4);
+                
+                // Ajustar el inicio si estamos cerca del final
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                // Botones de páginas
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    
+                    if (i === paginationData.page) {
+                        pageButton.classList.add('active');
+                    }
+                    
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        cargarAudiencias(currentPage);
+                    });
+                    
+                    paginationContainer.appendChild(pageButton);
+                }
+                
+                // Botón "Siguiente"
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = `<i class="fas fa-chevron-right"></i>`;
+                nextButton.disabled = !paginationData.hasNextPage;
+                nextButton.addEventListener('click', () => {
+                    currentPage++;
+                    cargarAudiencias(currentPage);
+                });
+                paginationContainer.appendChild(nextButton);
+            }
+            
+            // Event listeners para los filtros
+            applyFiltersBtn.addEventListener('click', () => {
+                currentPage = 1; // Resetear a la primera página al aplicar filtros
+                cargarAudiencias(currentPage);
+            });
+            
+            resetFiltersBtn.addEventListener('click', () => {
+                // Limpiar filtros
+                estadoFilter.value = '';
+                tipoFilter.value = '';
+                desdeDate.value = '';
+                hastaDate.value = '';
+                
+                // Cargar audiencias sin filtros
+                currentPage = 1;
+                cargarAudiencias(currentPage);
+            });
+            
+            // Inicializar fecha de "desde" con la fecha actual - 1 mes
+            const unMesAtras = new Date();
+            unMesAtras.setMonth(unMesAtras.getMonth() - 1);
+            desdeDate.valueAsDate = unMesAtras;
+            
+            // Cargar audiencias al iniciar la página
+            cargarAudiencias(currentPage);
+        });
+    </script>
+</body>
+</html>

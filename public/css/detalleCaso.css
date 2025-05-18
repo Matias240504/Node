@@ -1,0 +1,494 @@
+/* Estilos específicos para la página de detalle de caso */
+.caso-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.caso-header h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.2;
+}
+
+.caso-header .caso-expediente {
+    font-size: 1rem;
+    color: var(--text-secondary-color);
+    margin-top: 5px;
+    font-weight: 500;
+}
+
+.caso-header .caso-estado {
+    padding: 8px 16px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.caso-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 30px;
+    margin-bottom: 35px;
+}
+
+.caso-info {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.caso-info:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.caso-info-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.caso-info-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-color);
+}
+
+.info-group {
+    margin-bottom: 22px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.info-group h3 {
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    color: #555;
+    font-weight: 600;
+}
+
+.info-group p {
+    margin: 0;
+    line-height: 1.6;
+    color: #333;
+    font-size: 1.05rem;
+}
+
+.caso-actions {
+    background-color: #f8f9fa;
+    border-radius: 12px;
+    padding: 25px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.3s ease;
+}
+
+.caso-actions:hover {
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+}
+
+.action-section {
+    margin-bottom: 25px;
+}
+
+.action-section:last-child {
+    margin-bottom: 0;
+}
+
+.action-section h3 {
+    font-size: 1.2rem;
+    margin-bottom: 12px;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.estado-selector {
+    width: 100%;
+    padding: 12px 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 15px;
+    font-size: 1rem;
+    color: #333;
+    background-color: white;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.estado-selector:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+    outline: none;
+}
+
+.action-btn {
+    width: 100%;
+    padding: 12px 15px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.action-btn:hover {
+    background-color: var(--primary-dark-color);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.comentarios-section {
+    margin-top: 35px;
+    padding-top: 30px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.comentarios-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.comentarios-header h2 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.comentario-form {
+    margin-bottom: 25px;
+    background-color: #f8f9fa;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.comentario-form textarea {
+    width: 100%;
+    padding: 15px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    min-height: 120px;
+    margin-bottom: 15px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.comentario-form textarea:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(var(--primary-color-rgb), 0.2);
+    outline: none;
+}
+
+.comentarios-list {
+    margin-top: 25px;
+}
+
+.comentario-item {
+    margin-bottom: 20px;
+    background-color: var(--bg-white);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    transition: var(--transition);
+}
+
+.comentario-item:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.comentario-item.comentario-propio {
+    border-left: 3px solid var(--success-color);
+    background-color: var(--success-bg);
+}
+
+.comentario-item.comentario-nuevo {
+    animation: highlightNew 2s ease;
+}
+
+.comentario-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comentario-autor {
+    font-weight: 600;
+    color: var(--text-dark);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.comentario-autor i {
+    color: var(--primary-color);
+    font-size: 1rem;
+}
+
+.badge-propio {
+    background-color: var(--primary-light);
+    color: var(--primary-color);
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 5px;
+    font-weight: 600;
+}
+
+.comentario-fecha {
+    color: var(--text-light);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.comentario-texto {
+    color: var(--text-medium);
+    line-height: 1.6;
+    font-size: 0.95rem;
+}
+
+.comentario-empty {
+    text-align: center;
+    padding: 30px 20px;
+    color: var(--text-light);
+    background-color: var(--bg-light);
+    border-radius: var(--radius-md);
+    border: 1px dashed var(--border-color);
+}
+
+.comentario-empty i {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+    color: var(--text-light);
+    opacity: 0.5;
+}
+
+.comentario-empty p {
+    font-size: 1.1rem;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.comentario-empty small {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Estilos para comentarios no vistos */
+.comentario-no-visto {
+    border-left: 3px solid var(--accent-color);
+    background-color: rgba(255, 109, 0, 0.05);
+}
+
+.visto-badge {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 10px;
+    margin-left: 8px;
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+.visto-badge i {
+    margin-right: 3px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 109, 0, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 6px rgba(255, 109, 0, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 109, 0, 0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes highlightNew {
+    0%, 100% {
+        background-color: white;
+    }
+    20%, 80% {
+        background-color: var(--primary-light);
+    }
+}
+
+.badge {
+    display: inline-block;
+    padding: 6px 12px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.15);
+}
+
+.badge-enviado { 
+    background-color: var(--enviado-bg); 
+    color: var(--enviado-color); 
+    border: 1px solid var(--enviado-border);
+}
+
+.badge-aceptado { 
+    background-color: var(--aceptado-bg); 
+    color: var(--aceptado-color); 
+    border: 1px solid var(--aceptado-border);
+}
+
+.badge-denegado { 
+    background-color: var(--denegado-bg); 
+    color: var(--denegado-color); 
+    border: 1px solid var(--denegado-border);
+}
+
+.badge-iniciado { 
+    background-color: var(--iniciado-bg); 
+    color: var(--iniciado-color); 
+    border: 1px solid var(--iniciado-border);
+}
+
+.badge-finalizado { 
+    background-color: var(--finalizado-bg); 
+    color: var(--finalizado-color); 
+    border: 1px solid var(--finalizado-border);
+}
+
+.archivos-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.archivo-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.archivo-item:hover {
+    background-color: #f8f9fa;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.archivo-item:last-child {
+    margin-bottom: 0;
+}
+
+.archivo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin-right: 15px;
+    background-color: rgba(var(--primary-color-rgb), 0.1);
+    color: var(--primary-color);
+    border-radius: 50%;
+    font-size: 1.2rem;
+}
+
+.archivo-nombre {
+    flex-grow: 1;
+    font-weight: 500;
+    color: #333;
+}
+
+.archivo-fecha {
+    font-size: 0.85rem;
+    color: var(--text-secondary-color);
+    margin-left: 10px;
+}
+
+.archivo-nombre {
+    flex-grow: 1;
+}
+
+.archivo-fecha {
+    color: var(--text-secondary-color);
+    font-size: 0.85rem;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 20px;
+}
+
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: var(--primary-color);
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
