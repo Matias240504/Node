@@ -7,6 +7,11 @@ const audienciaSchema = new Schema({
         ref: 'Caso',
         required: true
     },
+    salaId: {
+        type: Schema.Types.ObjectId,
+        ref: 'Sala',
+        required: true
+    },
     tipo: {
         type: String,
         required: true,
@@ -24,15 +29,15 @@ const audienciaSchema = new Schema({
         type: String,
         required: true
     },
-    lugar: {
-        type: String,
-        required: true,
-        default: 'Sala virtual'
-    },
     estado: {
         type: String,
         required: true,
-        enum: ['pendiente', 'aprobada', 'rechazada', 'completada', 'cancelada'],
+        enum: ['abierta', 'en_progreso', 'completada', 'cancelada'],
+        default: 'abierta'
+    },
+    resultado: {
+        type: String,
+        enum: ['pendiente', 'favorable', 'desfavorable', 'aplazada'],
         default: 'pendiente'
     },
     notas: {

@@ -1,6 +1,7 @@
 const Caso = require('../models/caso');
 const User = require('../models/userModel');
 const Audiencia = require('../models/audienciaModel');
+const Sala = require('../models/salaModel');
 
 /**
  * Renderiza el dashboard del abogado con los datos necesarios
@@ -258,6 +259,160 @@ exports.renderAudiencias = async (req, res) => {
             message: 'Error al cargar la página de audiencias', 
             error: process.env.NODE_ENV === 'development' ? error : {}
         });
+    }
+};
+
+/**
+ * Renderiza la vista para crear una audiencia
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderCrearAudiencia = async (req, res) => {
+    try {
+        res.render('abogado/crearAudiencia', {
+            user: req.user,
+            title: 'Crear Audiencia',
+            currentPath: '/abogado/crearAudiencia'
+        });
+    } catch (error) {
+        console.error('Error al renderizar la vista de crear audiencia:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar la página de crear audiencia', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Obtiene las salas disponibles para audiencias
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerSalasDisponibles = async (req, res) => {
+    try {
+        const salas = await Sala.find({ disponibilidad: true })
+            .sort({ numero_de_sala: 1 });
+        
+        res.status(200).json({ salas });
+    } catch (error) {
+        console.error('Error al obtener salas disponibles:', error);
+        res.status(500).json({ message: 'Error al obtener salas disponibles', error: error.message });
+    }
+};
+
+/**
+ * Obtiene los casos aceptados para crear audiencias
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosAceptados = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        const casos = await Caso.find({ 
+            abogadoId, 
+            estado: 'aceptado' 
+        })
+        .sort({ fechaRegistro: -1 })
+        .populate('clienteId', 'nombre apellido')
+        .select('numeroExpediente titulo tipo clienteId');
+        
+        res.status(200).json({ casos });
+    } catch (error) {
+        console.error('Error al obtener casos aceptados:', error);
+        res.status(500).json({ message: 'Error al obtener casos aceptados', error: error.message });
+    }
+};
+
+/**
+ * Crea una nueva audiencia y actualiza la disponibilidad de la sala
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.crearAudiencia = async (req, res) => {
+    try {
+        const { casoId, salaId, tipo, descripcion, fecha, hora } = req.body;
+        const abogadoId = req.user.id;
+        
+        // Verificar que el caso exista y esté aceptado
+        const caso = await Caso.findOne({ _id: casoId, estado: 'aceptado' });
+        if (!caso) {
+            return res.status(400).json({ message: 'El caso seleccionado no existe o no está aceptado' });
+        }
+        
+        // Verificar que la sala exista y esté disponible
+        const sala = await Sala.findOne({ _id: salaId, disponibilidad: true });
+        if (!sala) {
+            return res.status(400).json({ message: 'La sala seleccionada no existe o no está disponible' });
+        }
+        
+        // Crear la audiencia
+        const nuevaAudiencia = new Audiencia({
+            casoId,
+            salaId,
+            tipo,
+            descripcion,
+            fecha,
+            hora,
+            abogadoId
+        });
+        
+        await nuevaAudiencia.save();
+        
+        // Actualizar la disponibilidad de la sala a false
+        sala.disponibilidad = false;
+        await sala.save();
+        
+        res.status(201).json({ 
+            message: 'Audiencia creada exitosamente', 
+            audiencia: nuevaAudiencia 
+        });
+    } catch (error) {
+        console.error('Error al crear audiencia:', error);
+        res.status(500).json({ message: 'Error al crear audiencia', error: error.message });
+    }
+};
+
+/**
+ * Actualiza el estado de una audiencia y la disponibilidad de la sala
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.actualizarEstadoAudiencia = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { estado, resultado } = req.body;
+        
+        // Verificar que la audiencia exista
+        const audiencia = await Audiencia.findById(id);
+        if (!audiencia) {
+            return res.status(404).json({ message: 'Audiencia no encontrada' });
+        }
+        
+        // Si la audiencia se marca como completada o cancelada, liberar la sala
+        if (estado === 'completada' || estado === 'cancelada') {
+            const sala = await Sala.findById(audiencia.salaId);
+            if (sala) {
+                sala.disponibilidad = true;
+                await sala.save();
+            }
+        }
+        
+        // Actualizar la audiencia
+        audiencia.estado = estado;
+        if (resultado) {
+            audiencia.resultado = resultado;
+        }
+        
+        await audiencia.save();
+        
+        res.status(200).json({ 
+            message: 'Estado de audiencia actualizado exitosamente', 
+            audiencia 
+        });
+    } catch (error) {
+        console.error('Error al actualizar estado de audiencia:', error);
+        res.status(500).json({ message: 'Error al actualizar estado de audiencia', error: error.message });
     }
 };
 

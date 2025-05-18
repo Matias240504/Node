@@ -24,6 +24,12 @@ router.get('/api/audiencias', verifyToken, allowRoles('abogado'), abogadoControl
 // Ruta para la vista de audiencias
 router.get('/audiencias', verifyViewToken, viewAllowRoles('abogado'), abogadoController.renderAudiencias);
 
+// Rutas para crear audiencias
+router.get('/crearAudiencia', verifyViewToken, viewAllowRoles('abogado'), abogadoController.renderCrearAudiencia);
+router.get('/api/salas-disponibles', verifyToken, allowRoles('abogado'), abogadoController.obtenerSalasDisponibles);
+router.get('/api/casos-aceptados', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosAceptados);
+router.post('/api/audiencias', verifyToken, allowRoles('abogado'), abogadoController.crearAudiencia);
+
 // Rutas para casos
 router.get('/casos', verifyViewToken, viewAllowRoles('abogado'), abogadoController.renderCasos);
 router.get('/casos/:id', verifyViewToken, viewAllowRoles('abogado'), abogadoController.renderDetalleCaso);
