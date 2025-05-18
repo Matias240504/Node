@@ -1,25 +1,76 @@
 :root {
-    --primary-color: #2c3e50;
-    --secondary-color: #2980b9;
-    --success-color: #27ae60;
-    --warning-color: #f39c12;
-    --danger-color: #e74c3c;
-    --dark-color: #34495e;
-    --bg-color: #f4f7f9;
-    --card-bg: #ffffff;
-    --text-color: #2d3436;
-    --text-muted: #7f8c8d;
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 2rem;
-    --border-radius: 12px;
-    --shadow: 0 4px 12px rgba(0,0,0,0.08);
-    --transition: 0.3s ease-in-out;
-    --font-family-base: 'Roboto', sans-serif;
-    --font-family-header: 'Merriweather', serif;
-    --font-size-base: 1rem;
-    --font-size-lg: 1.8rem;
+  /* Colores principales */
+  --primary-color: #1976d2;
+  --primary-color-rgb: 25, 118, 210;
+  --primary-light: rgba(25, 118, 210, 0.1);
+  --primary-hover: #1565c0;
+  --secondary-color: #2980b9;
+  
+  /* Colores de estado */
+  --success-color: #27ae60;
+  --warning-color: #f39c12;
+  --danger-color: #e74c3c;
+  --accent-color: #ff6d00;
+  
+  /* Colores de fondo */
+  --dark-color: #34495e;
+  --bg-color: #f4f7f9;
+  --bg-light: #f8f9fa;
+  --bg-white: #ffffff;
+  --card-bg: #ffffff;
+  --hover-color: #e3f2fd;
+  
+  /* Colores de texto */
+  --text-dark: #333333;
+  --text-medium: #555555;
+  --text-light: #666666;
+  --text-muted: #7f8c8d;
+  --text-color: #333333; /* Mantener compatibilidad con el código existente */
+  
+  /* Espaciado y bordes */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --border-radius: 12px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --border-color: #e0e0e0;
+  
+  /* Sombras y transiciones */
+  --shadow-sm: 0 2px 5px rgba(0,0,0,0.05);
+  --shadow-md: 0 4px 10px rgba(0,0,0,0.1);
+  --shadow-lg: 0 10px 25px rgba(0,0,0,0.15);
+  --shadow: var(--shadow-md);
+  --transition: 0.3s ease-in-out;
+  
+  /* Tipografía */
+  --font-family-base: 'Roboto', sans-serif;
+  --font-family-header: 'Merriweather', serif;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.8rem;
+  
+  /* Estados de casos */
+  --enviado-bg: #f0f0f0;
+  --enviado-color: #555555;
+  --enviado-border: #e0e0e0;
+  
+  --aceptado-bg: #e3f7ec;
+  --aceptado-color: #0c6b3d;
+  --aceptado-border: #c3e9d0;
+  
+  --denegado-bg: #fde8ea;
+  --denegado-color: #b71c1c;
+  --denegado-border: #f8c9cc;
+  
+  --iniciado-bg: #e3f2fd;
+  --iniciado-color: #0d47a1;
+  --iniciado-border: #c0d8f3;
+  
+  --finalizado-bg: #e0f7fa;
+  --finalizado-color: #006064;
+  --finalizado-border: #b2ebf2;
 }
 
 *,
@@ -135,12 +186,11 @@ body {
 
 /* Main Content */
 .main-content {
-    margin-left: 240px;
-    padding: var(--spacing-lg);
     flex: 1;
+    padding: var(--spacing-lg);
+    margin-left: 240px;
     min-height: 100vh;
     background-color: var(--bg-color);
-    transition: margin-left var(--transition);
 }
 
 /* Responsive for smaller screens */

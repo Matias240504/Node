@@ -118,6 +118,7 @@ body {
   font-weight: 700;
   margin-bottom: var(--spacing-lg);
   letter-spacing: 1px;
+  color: white;
 }
 
 .sidebar-menu {
@@ -220,13 +221,11 @@ body {
   flex-wrap: wrap;
 }
 
-.page-header h2 {
+.page-title {
   font-size: 1.8rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--text-dark);
   margin: 0;
-  position: relative;
-  padding-bottom: 10px;
 }
 
 .page-header h2::after {
@@ -420,13 +419,13 @@ body {
   border-bottom: 1px solid var(--border-color);
 }
 
-.section-title {
-  font-size: 1.4rem;
+.section.page-header h2 {
+  font-size: 1.8rem;
   font-weight: 700;
-  color: var(--primary-color);
+  color: var(--text-dark);
   margin: 0;
   position: relative;
-  padding-bottom: 5px;
+  padding-bottom: 10px;
 }
 
 .section-title::after {
@@ -485,15 +484,14 @@ table {
   font-size: 0.9rem;
 }
 
-thead {
+table th {
   background-color: var(--primary-color);
+  font-weight: 600;
   color: white;
-}
-
-th, td {
-  padding: 14px 15px;
+  padding: 12px 15px;
   text-align: left;
   border-bottom: 1px solid var(--border-color);
+  font-size: 0.9rem;
 }
 
 th {
@@ -512,6 +510,13 @@ tbody tr:hover {
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: all 0.2s ease;
+}
+
+tbody .btn-primary:hover {
+  background-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  color: white;
 }
 
 tbody td {

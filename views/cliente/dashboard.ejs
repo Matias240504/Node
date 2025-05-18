@@ -7,56 +7,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <link rel="stylesheet" href="/css/styles.css" />
-    <link rel="stylesheet" href="/css/dashboardCliente.css" />
+    <link rel="stylesheet" href="/css/dashboardClienteNew.css" />
     <link rel="stylesheet" href="/css/floatingChat.css" />
+    <link rel="stylesheet" href="/css/titleFixes.css" />
+    <link rel="stylesheet" href="/css/dashboardCommon.css" />
+    <link rel="stylesheet" href="/css/buttonFixes.css" />
     <style>
-        /* Estilos adicionales para el dashboard del cliente */
-        .user-info {
-            margin-top: auto;
-            padding-top: var(--spacing-md);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background-color: var(--secondary-color);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: var(--spacing-sm);
-        }
-
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .logout-btn:hover {
-            color: white;
-        }
-        
-        /* Estilos adicionales específicos para esta página */
-        .logout-btn {
-            background: none;
-            border: none;
-            color: var(--accent-color);
-            font-size: 1.2rem;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .logout-btn:hover {
-            color: white;
-        }
+        /* Estilos adicionales específicos para esta página que no están en el CSS principal */
+        /* Nota: La mayoría de los estilos se han movido al archivo dashboardClienteNew.css */
         
         /* Estilos para la tabla de casos */
         .loading-row td {
@@ -205,7 +163,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Casos Activos</h3>
-                        <div class="card-icon" style="background-color: var(--secondary-color);">
+                        <div class="card-icon">
                             <i class="fas fa-briefcase"></i>
                         </div>
                     </div>
@@ -216,7 +174,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Casos Pendientes</h3>
-                        <div class="card-icon" style="background-color: var(--warning-color);">
+                        <div class="card-icon">
                             <i class="fas fa-clock"></i>
                         </div>
                     </div>
@@ -227,7 +185,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Total de Casos</h3>
-                        <div class="card-icon" style="background-color: var(--success-color);">
+                        <div class="card-icon">
                             <i class="fas fa-folder"></i>
                         </div>
                     </div>
@@ -238,7 +196,7 @@
                 <div class="card">
                     <div class="card-header">
                         <h3 class="card-title">Casos Finalizados</h3>
-                        <div class="card-icon" style="background-color: var(--dark-color);">
+                        <div class="card-icon">
                             <i class="fas fa-check-circle"></i>
                         </div>
                     </div>
