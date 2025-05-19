@@ -132,3 +132,5 @@ function createChatElements() {
   document.body.appendChild(chatButton);
   document.body.appendChild(chatContainer);
 }
+
+// Este archivo es el chat flotante, no eliminar nada aquí.

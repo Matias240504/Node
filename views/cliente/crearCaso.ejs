@@ -15,28 +15,7 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h1>Sistema Legal</h1>
-            </div>
-
-            <ul class="sidebar-menu">
-                <li><a href="/cliente/dashboard"><i class="fas fa-home"></i> Inicio</a></li>
-                <li><a href="/cliente/crearCaso" class="active"><i class="fas fa-plus-circle"></i> Crear Caso</a></li>
-            </ul>
-
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div>
-                    <div id="userName"><%= user.nombre %></div>
-                    <small id="userRole">Cliente</small>
-                </div>
-                <button id="logoutBtn" class="logout-btn"><i class="fas fa-sign-out-alt"></i></button>
-            </div>
-        </div>
+        <%- include('./partials/sidebar', {currentPath: '/cliente/dashboard'}) %>
         
         <!-- Main Content -->
         <div class="main-content">
