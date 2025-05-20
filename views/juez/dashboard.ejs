@@ -283,6 +283,23 @@
         const today = new Date();
         document.getElementById('currentDate').textContent = today.toLocaleDateString('es-ES', options);
     </script>
-    <!-- Puedes agregar scripts específicos aquí -->
+    <!-- Script específico para el dashboard de abogado -->
+    <script src="/js/dashboardAbogado.js"></script>
+    <!-- Modal de Detalle de Caso -->
+    <div class="modal-overlay" id="modalOverlay">
+        <!-- ...existing code... -->
+    </div>
+    
+    <!-- Script para el modal de detalle de caso -->
+    <script src="/js/detalleCasoModal.js"></script>
+    
+    <script>
+        // Agregar evento click para botones de detalle (delegación de eventos)
+        $(document).on('click', '.btn-detalle', function() {
+            const casoId = $(this).data('id');
+            window.abrirDetalleCaso(casoId);
+        });
+    </script>
+    <%- include('./partials/scripts') %>
 </body>
 </html>
