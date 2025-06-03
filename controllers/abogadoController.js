@@ -1,92 +1,153 @@
-const Caso = require('../models/caso');
 const User = require('../models/userModel');
+const Caso = require('../models/caso');
 const Audiencia = require('../models/audienciaModel');
 const Sala = require('../models/salaModel');
+const mongoose = require('mongoose');
+const { validationResult } = require('express-validator');
 
 /**
- * Renderiza el dashboard del abogado con los datos necesarios
+ * Renderiza el dashboard del abogado
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
 exports.renderDashboard = async (req, res) => {
     try {
-        const abogadoId = req.user.id; // Obtenido del middleware de autenticación
-
-        // Obtener todos los casos creados por clientes (no solo los asignados)
-        const casos = await Caso.find()
+        const abogadoId = req.user.id;
+        
+        // Obtener casos asignados al abogado
+        const casos = await Caso.find({ abogadoId })
             .sort({ fechaRegistro: -1 })
+            .limit(5)
             .populate('clienteId', 'nombre apellido email')
-            .populate('abogadoId', 'nombre apellido')
-            .select('numeroExpediente tipo estado fechaRegistro clienteId abogadoId titulo');
-
-        // Estadísticas de casos
-        const casosActivos = await Caso.countDocuments({ 
-            abogadoId, 
-            estado: { $in: ['aceptado', 'iniciado'] } 
+            .lean();
+            
+        // Asegurar que cada caso tenga las propiedades necesarias para evitar errores en la plantilla
+        casos.forEach(caso => {
+            if (!caso.clienteId) {
+                caso.clienteId = { nombre: 'Cliente', apellido: 'No asignado', email: 'No disponible' };
+            }
+            // Asegurar que tipo y estado existan para evitar errores
+            caso.tipo = caso.tipo || 'civil';
+            caso.estado = caso.estado || 'pendiente';
+            // Asegurar que fechaRegistro existe
+            if (!caso.fechaRegistro) {
+                caso.fechaRegistro = new Date();
+            }
         });
-
-        // Obtener audiencias pendientes del abogado
+            
+        // Obtener audiencias próximas
+        const hoy = new Date();
+        const proximoMes = new Date();
+        proximoMes.setMonth(proximoMes.getMonth() + 1);
+        
         const audiencias = await Audiencia.find({
             abogadoId,
-            fecha: { $gte: new Date() },
-            estado: { $in: ['pendiente', 'aprobada'] }
+            fecha: { $gte: hoy, $lte: proximoMes }
         })
-        .sort({ fecha: 1, hora: 1 })
+        .sort({ fecha: 1 })
+        .limit(5)
         .populate({
             path: 'casoId',
-            select: 'numeroExpediente clienteId tipo titulo',
+            select: 'titulo numeroExpediente clienteId',
             populate: {
                 path: 'clienteId',
                 select: 'nombre apellido'
             }
         })
-        .limit(3);
+        .lean();
         
-        // Obtener audiencias creadas por el abogado (todas)
-        const audienciasCreadas = await Audiencia.find({
-            abogadoId
-        })
-        .sort({ fechaCreacion: -1 })
-        .populate({
-            path: 'casoId',
-            select: 'numeroExpediente clienteId tipo titulo',
-            populate: {
-                path: 'clienteId',
-                select: 'nombre apellido'
+        // Asegurar que cada audiencia tenga las propiedades necesarias para evitar errores en la plantilla
+        audiencias.forEach(audiencia => {
+            if (!audiencia.casoId) {
+                audiencia.casoId = { numeroExpediente: 'No disponible', titulo: 'No disponible' };
             }
-        })
-        .limit(5);
+            if (!audiencia.casoId.clienteId) {
+                audiencia.casoId.clienteId = { nombre: 'Cliente', apellido: 'No asignado' };
+            }
+            // Formatear hora a partir de la fecha
+            const fechaObj = new Date(audiencia.fecha);
+            audiencia.hora = fechaObj.getHours().toString().padStart(2, '0') + ':' + 
+                          fechaObj.getMinutes().toString().padStart(2, '0');
+            // Asegurar que estado y tipo existan para evitar errores
+            audiencia.estado = audiencia.estado || 'pendiente';
+            audiencia.tipo = audiencia.tipo || 'otro';
+        });
         
-        // Obtener la fecha de la próxima audiencia
-        const proximaAudiencia = audiencias.length > 0 ? audiencias[0].fecha : new Date();
-
-        // Contador de documentos (esto sería para una funcionalidad a implementar)
-        // Por ahora usaremos un contador de archivos en los casos
-        let totalDocumentos = 0;
-        const casosConArchivos = await Caso.find({ abogadoId });
-        casosConArchivos.forEach(caso => {
-            if (caso.archivos && caso.archivos.length) {
-                totalDocumentos += caso.archivos.length;
+        // Obtener audiencias creadas por el abogado
+        const audienciasCreadas = await Audiencia.find({ abogadoId })
+            .sort({ fecha: -1 })
+            .limit(5)
+            .populate({
+                path: 'casoId',
+                select: 'numeroExpediente titulo clienteId',
+                populate: {
+                    path: 'clienteId',
+                    select: 'nombre apellido'
+                }
+            })
+            .lean();
+            
+        // Asegurar que cada audiencia tenga las propiedades necesarias para evitar errores en la plantilla
+        audienciasCreadas.forEach(audiencia => {
+            if (!audiencia.casoId) {
+                audiencia.casoId = { numeroExpediente: 'No disponible' };
+            }
+            if (!audiencia.casoId.clienteId) {
+                audiencia.casoId.clienteId = { nombre: 'Cliente', apellido: 'No asignado' };
+            }
+            // Asegurar que estado y tipo existan para evitar errores
+            audiencia.estado = audiencia.estado || 'pendiente';
+            audiencia.tipo = audiencia.tipo || 'otro';
+        });
+        
+        // Contar casos por estado
+        const casosPorEstado = await Caso.aggregate([
+            { $match: { abogadoId: new mongoose.Types.ObjectId(abogadoId) } },
+            { $group: { _id: "$estado", count: { $sum: 1 } } }
+        ]);
+        
+        // Como no existe el modelo de Documento, establecemos un valor predeterminado
+        const totalDocumentos = 0; // Valor por defecto hasta que se implemente el modelo de documentos
+        
+        // Formatear datos para el dashboard
+        const estadisticas = {
+            pendientes: 0,
+            aceptados: 0,
+            iniciados: 0,
+            finalizados: 0,
+            casosActivos: 0,
+            totalDocumentos: totalDocumentos || 0,
+            proximaAudiencia: 'No hay audiencias programadas'
+        };
+        
+        // Procesar casos por estado
+        casosPorEstado.forEach(item => {
+            if (estadisticas.hasOwnProperty(item._id)) {
+                estadisticas[item._id] = item.count;
             }
         });
         
-        // Casos recientes (últimos 5)
-        const casosRecientes = casos.slice(0, 5);
-
-        // Renderizar la plantilla con los datos
+        // Calcular casos activos (aceptados + iniciados)
+        estadisticas.casosActivos = estadisticas.aceptados + estadisticas.iniciados;
+        
+        // Obtener la próxima audiencia si existe
+        if (audiencias.length > 0) {
+            const proximaAudiencia = audiencias[0];
+            const fechaAudiencia = new Date(proximaAudiencia.fecha);
+            estadisticas.proximaAudiencia = fechaAudiencia.toLocaleDateString();
+        }
+        
         res.render('abogado/dashboard', {
             user: req.user,
-            casos: casosRecientes,
+            title: 'Dashboard',
+            currentPath: '/abogado/dashboard',
+            casos,
             audiencias,
             audienciasCreadas,
-            estadisticas: {
-                casosActivos,
-                proximaAudiencia: proximaAudiencia.toLocaleDateString(),
-                totalDocumentos
-            }
+            estadisticas
         });
     } catch (error) {
-        console.error('Error en el dashboard del abogado:', error);
+        console.error('Error al renderizar dashboard:', error);
         res.status(500).render('error', { 
             message: 'Error al cargar el dashboard', 
             error: process.env.NODE_ENV === 'development' ? error : {}
@@ -95,416 +156,7 @@ exports.renderDashboard = async (req, res) => {
 };
 
 /**
- * Obtiene todos los casos para mostrar en el dashboard del abogado
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerCasosAbogado = async (req, res) => {
-    try {
-        // Obtener todos los casos ordenados por fecha
-        const casos = await Caso.find()
-            .sort({ fechaRegistro: -1 })
-            .populate('clienteId', 'nombre apellido')
-            .populate('abogadoId', 'nombre apellido')
-            .select('numeroExpediente titulo tipo estado fechaRegistro clienteId abogadoId')
-            .limit(5); // Limitar a 5 casos para el dashboard
-        
-        res.status(200).json({ casos });
-    } catch (error) {
-        console.error('Error al obtener casos:', error);
-        res.status(500).json({ message: 'Error al obtener los casos', error: error.message });
-    }
-};
-
-/**
- * Obtiene estadísticas de casos para el dashboard del abogado
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerEstadisticasAbogado = async (req, res) => {
-    try {
-        const abogadoId = req.user.id;
-        
-        // Total de casos asignados
-        const totalCasos = await Caso.countDocuments({ abogadoId });
-        
-        // Casos por estado
-        const casosPorEstado = await Caso.aggregate([
-            { $match: { abogadoId: abogadoId.toString() } },
-            { $group: { _id: '$estado', count: { $sum: 1 } } }
-        ]);
-        
-        // Formatear estadísticas por estado
-        const estadosProcesados = {
-            enviado: 0,
-            aceptado: 0,
-            iniciado: 0,
-            finalizado: 0
-        };
-        
-        casosPorEstado.forEach(item => {
-            if (estadosProcesados.hasOwnProperty(item._id)) {
-                estadosProcesados[item._id] = item.count;
-            }
-        });
-        
-        // Contar documentos totales
-        let totalDocumentos = 0;
-        const casosConArchivos = await Caso.find({ abogadoId });
-        casosConArchivos.forEach(caso => {
-            if (caso.archivos && caso.archivos.length) {
-                totalDocumentos += caso.archivos.length;
-            }
-        });
-        
-        // Obtener estadísticas de audiencias
-        const totalAudiencias = await Audiencia.countDocuments({ abogadoId });
-        const audienciasPendientes = await Audiencia.countDocuments({ 
-            abogadoId, 
-            estado: 'pendiente',
-            fecha: { $gte: new Date() }
-        });
-        const audienciasAprobadas = await Audiencia.countDocuments({ 
-            abogadoId, 
-            estado: 'aprobada',
-            fecha: { $gte: new Date() }
-        });
-        
-        res.status(200).json({
-            totalCasos,
-            estadosProcesados,
-            totalDocumentos,
-            audiencias: {
-                total: totalAudiencias,
-                pendientes: audienciasPendientes,
-                aprobadas: audienciasAprobadas
-            }
-        });
-    } catch (error) {
-        console.error('Error al obtener estadísticas del abogado:', error);
-        res.status(500).json({ message: 'Error al obtener estadísticas', error: error.message });
-    }
-};
-
-/**
- * Obtiene audiencias para el abogado con paginación
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerAudiencias = async (req, res) => {
-    try {
-        const abogadoId = req.user.id;
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        
-        // Filtros opcionales
-        const filtros = { abogadoId };
-        
-        if (req.query.estado) {
-            filtros.estado = req.query.estado;
-        }
-        
-        if (req.query.desde) {
-            filtros.fecha = { $gte: new Date(req.query.desde) };
-        }
-        
-        if (req.query.hasta) {
-            if (filtros.fecha) {
-                filtros.fecha.$lte = new Date(req.query.hasta);
-            } else {
-                filtros.fecha = { $lte: new Date(req.query.hasta) };
-            }
-        }
-        
-        // Contar total de audiencias con los filtros aplicados
-        const total = await Audiencia.countDocuments(filtros);
-        
-        // Obtener audiencias paginadas
-        const audiencias = await Audiencia.find(filtros)
-            .sort({ fecha: 1, hora: 1 })
-            .populate({
-                path: 'casoId',
-                select: 'numeroExpediente clienteId tipo titulo',
-                populate: {
-                    path: 'clienteId',
-                    select: 'nombre apellido'
-                }
-            })
-            .populate('juezId', 'nombre apellido')
-            .skip(skip)
-            .limit(limit);
-        
-        // Calcular información de paginación
-        const totalPages = Math.ceil(total / limit);
-        const hasNextPage = page < totalPages;
-        const hasPrevPage = page > 1;
-        
-        res.status(200).json({
-            audiencias,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages,
-                hasNextPage,
-                hasPrevPage
-            }
-        });
-    } catch (error) {
-        console.error('Error al obtener audiencias del abogado:', error);
-        res.status(500).json({ message: 'Error al obtener audiencias', error: error.message });
-    }
-};
-
-/**
- * Renderiza la vista de audiencias con paginación
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.renderAudiencias = async (req, res) => {
-    try {
-        res.render('abogado/audiencias', {
-            user: req.user,
-            title: 'Audiencias',
-            currentPath: '/abogado/audiencias'
-        });
-    } catch (error) {
-        console.error('Error al renderizar audiencias:', error);
-        res.status(500).render('error', { 
-            message: 'Error al cargar la página de audiencias', 
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-};
-
-/**
- * Renderiza la vista para crear una audiencia
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.renderCrearAudiencia = async (req, res) => {
-    try {
-        res.render('abogado/crearAudiencia', {
-            user: req.user,
-            title: 'Crear Audiencia',
-            currentPath: '/abogado/crearAudiencia'
-        });
-    } catch (error) {
-        console.error('Error al renderizar la vista de crear audiencia:', error);
-        res.status(500).render('error', { 
-            message: 'Error al cargar la página de crear audiencia', 
-            error: process.env.NODE_ENV === 'development' ? error : {}
-        });
-    }
-};
-
-/**
- * Obtiene las salas disponibles para audiencias
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerSalasDisponibles = async (req, res) => {
-    try {
-        const salas = await Sala.find({ disponibilidad: true })
-            .sort({ numero_de_sala: 1 });
-        
-        res.status(200).json({ salas });
-    } catch (error) {
-        console.error('Error al obtener salas disponibles:', error);
-        res.status(500).json({ message: 'Error al obtener salas disponibles', error: error.message });
-    }
-};
-
-/**
- * Obtiene los casos aceptados para crear audiencias
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerCasosAceptados = async (req, res) => {
-    try {
-        const abogadoId = req.user.id;
-        
-        const casos = await Caso.find({ 
-            abogadoId, 
-            estado: 'aceptado' 
-        })
-        .sort({ fechaRegistro: -1 })
-        .populate('clienteId', 'nombre apellido')
-        .select('numeroExpediente titulo tipo clienteId');
-        
-        res.status(200).json({ casos });
-    } catch (error) {
-        console.error('Error al obtener casos aceptados:', error);
-        res.status(500).json({ message: 'Error al obtener casos aceptados', error: error.message });
-    }
-};
-
-/**
- * Crea una nueva audiencia y actualiza la disponibilidad de la sala
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.crearAudiencia = async (req, res) => {
-    try {
-        const { casoId, salaId, tipo, descripcion, fecha, hora } = req.body;
-        const abogadoId = req.user.id;
-        
-        // Verificar que el caso exista y esté aceptado
-        const caso = await Caso.findOne({ _id: casoId, estado: 'aceptado' });
-        if (!caso) {
-            return res.status(400).json({ message: 'El caso seleccionado no existe o no está aceptado' });
-        }
-        
-        // Verificar que la sala exista y esté disponible
-        const sala = await Sala.findOne({ _id: salaId, disponibilidad: true });
-        if (!sala) {
-            return res.status(400).json({ message: 'La sala seleccionada no existe o no está disponible' });
-        }
-        
-        // Crear la audiencia
-        const nuevaAudiencia = new Audiencia({
-            casoId,
-            salaId,
-            tipo,
-            descripcion,
-            fecha,
-            hora,
-            abogadoId
-        });
-        
-        await nuevaAudiencia.save();
-        
-        // Actualizar la disponibilidad de la sala a false
-        sala.disponibilidad = false;
-        await sala.save();
-        
-        res.status(201).json({ 
-            message: 'Audiencia creada exitosamente', 
-            audiencia: nuevaAudiencia 
-        });
-    } catch (error) {
-        console.error('Error al crear audiencia:', error);
-        res.status(500).json({ message: 'Error al crear audiencia', error: error.message });
-    }
-};
-
-/**
- * Actualiza el estado de una audiencia y la disponibilidad de la sala
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.actualizarEstadoAudiencia = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const { estado, resultado } = req.body;
-        
-        // Verificar que la audiencia exista
-        const audiencia = await Audiencia.findById(id);
-        if (!audiencia) {
-            return res.status(404).json({ message: 'Audiencia no encontrada' });
-        }
-        
-        // Si la audiencia se marca como completada o cancelada, liberar la sala
-        if (estado === 'completada' || estado === 'cancelada') {
-            const sala = await Sala.findById(audiencia.salaId);
-            if (sala) {
-                sala.disponibilidad = true;
-                await sala.save();
-            }
-        }
-        
-        // Actualizar la audiencia
-        audiencia.estado = estado;
-        if (resultado) {
-            audiencia.resultado = resultado;
-        }
-        
-        await audiencia.save();
-        
-        res.status(200).json({ 
-            message: 'Estado de audiencia actualizado exitosamente', 
-            audiencia 
-        });
-    } catch (error) {
-        console.error('Error al actualizar estado de audiencia:', error);
-        res.status(500).json({ message: 'Error al actualizar estado de audiencia', error: error.message });
-    }
-};
-
-/**
- * Obtiene casos con paginación para la vista de casos
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerCasosConPaginacion = async (req, res) => {
-    try {
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        
-        // Filtros opcionales
-        const filtros = {};
-        
-        if (req.query.estado) {
-            filtros.estado = req.query.estado;
-        }
-        
-        if (req.query.tipo) {
-            filtros.tipo = req.query.tipo;
-        }
-        
-        // Filtro opcional por abogado asignado
-        if (req.query.asignado === 'si') {
-            filtros.abogadoId = { $exists: true, $ne: null };
-        } else if (req.query.asignado === 'no') {
-            filtros.abogadoId = { $exists: false };
-        }
-        
-        // Busqueda por texto
-        if (req.query.busqueda) {
-            const termino = req.query.busqueda;
-            filtros.$or = [
-                { numeroExpediente: { $regex: termino, $options: 'i' } },
-                { titulo: { $regex: termino, $options: 'i' } }
-            ];
-        }
-        
-        // Contar total de casos con los filtros aplicados
-        const total = await Caso.countDocuments(filtros);
-        
-        // Obtener casos paginados
-        const casos = await Caso.find(filtros)
-            .sort({ fechaRegistro: -1 })
-            .populate('clienteId', 'nombre apellido')
-            .populate('abogadoId', 'nombre apellido')
-            .skip(skip)
-            .limit(limit);
-        
-        // Calcular información de paginación
-        const totalPages = Math.ceil(total / limit);
-        const hasNextPage = page < totalPages;
-        const hasPrevPage = page > 1;
-        
-        res.status(200).json({
-            casos,
-            pagination: {
-                total,
-                page,
-                limit,
-                totalPages,
-                hasNextPage,
-                hasPrevPage
-            }
-        });
-    } catch (error) {
-        console.error('Error al obtener casos paginados:', error);
-        res.status(500).json({ message: 'Error al obtener los casos', error: error.message });
-    }
-};
-
-/**
- * Renderiza la vista de casos con paginación
+ * Renderiza la lista de casos asignados al abogado
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
@@ -512,7 +164,7 @@ exports.renderCasos = async (req, res) => {
     try {
         res.render('abogado/casos', {
             user: req.user,
-            title: 'Casos',
+            title: 'Mis Casos',
             currentPath: '/abogado/casos'
         });
     } catch (error) {
@@ -525,54 +177,257 @@ exports.renderCasos = async (req, res) => {
 };
 
 /**
- * Obtiene detalles de un caso específico
+ * Renderiza la lista de audiencias del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderAudiencias = async (req, res) => {
+    try {
+        res.render('abogado/audiencias', {
+            user: req.user,
+            title: 'Mis Audiencias',
+            currentPath: '/abogado/audiencias'
+        });
+    } catch (error) {
+        console.error('Error al renderizar audiencias:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar la página de audiencias', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Obtiene la lista de casos asignados al abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosAbogado = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { estado } = req.query;
+        
+        // Construir filtro
+        const filtro = { abogadoId };
+        if (estado && estado !== 'todos') {
+            filtro.estado = estado;
+        }
+        
+        // Obtener casos con filtro
+        const casos = await Caso.find(filtro)
+            .sort({ fechaRegistro: -1 })
+            .populate('clienteId', 'nombre apellido email')
+            .lean();
+            
+        // Formatear datos para la respuesta
+        const casosProcesados = casos.map(caso => ({
+            _id: caso._id,
+            numeroExpediente: caso.numeroExpediente,
+            titulo: caso.titulo,
+            tipo: caso.tipo,
+            estado: caso.estado,
+            fechaRegistro: caso.fechaRegistro,
+            clienteNombre: caso.clienteId ? `${caso.clienteId.nombre} ${caso.clienteId.apellido}` : 'Cliente no disponible',
+            clienteEmail: caso.clienteId ? caso.clienteId.email : '',
+            prioridad: caso.prioridad
+        }));
+        
+        res.status(200).json({ casos: casosProcesados });
+    } catch (error) {
+        console.error('Error al obtener casos:', error);
+        res.status(500).json({ message: 'Error al obtener los casos', error: error.message });
+    }
+};
+
+/**
+ * Obtiene la lista de audiencias del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerAudiencias = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { periodo } = req.query;
+        
+        // Definir rango de fechas según el periodo
+        const hoy = new Date();
+        let fechaInicio = new Date(hoy);
+        let fechaFin = new Date(hoy);
+        
+        switch (periodo) {
+            case 'semana':
+                fechaFin.setDate(hoy.getDate() + 7);
+                break;
+            case 'mes':
+                fechaFin.setMonth(hoy.getMonth() + 1);
+                break;
+            case 'trimestre':
+                fechaFin.setMonth(hoy.getMonth() + 3);
+                break;
+            default:
+                // Por defecto, próximos 30 días
+                fechaFin.setDate(hoy.getDate() + 30);
+        }
+        
+        // Obtener audiencias en el rango de fechas
+        const audiencias = await Audiencia.find({
+            abogadoId,
+            fecha: { $gte: fechaInicio, $lte: fechaFin }
+        })
+        .sort({ fecha: 1 })
+        .populate('casoId', 'titulo numeroExpediente clienteId')
+        .populate({
+            path: 'casoId',
+            populate: { path: 'clienteId', select: 'nombre apellido email' }
+        })
+        .lean();
+        
+        // Formatear datos para la respuesta
+        const audienciasProcesadas = audiencias.map(audiencia => {
+            const audienciaFormateada = {
+                _id: audiencia._id,
+                titulo: audiencia.titulo,
+                descripcion: audiencia.descripcion,
+                fecha: audiencia.fecha,
+                hora: audiencia.hora,
+                lugar: audiencia.lugar,
+                tipo: audiencia.tipo,
+                estado: audiencia.estado
+            };
+            
+            if (audiencia.casoId) {
+                audienciaFormateada.caso = {
+                    _id: audiencia.casoId._id,
+                    titulo: audiencia.casoId.titulo,
+                    numeroExpediente: audiencia.casoId.numeroExpediente
+                };
+                
+                if (audiencia.casoId.clienteId) {
+                    audienciaFormateada.cliente = {
+                        nombre: `${audiencia.casoId.clienteId.nombre} ${audiencia.casoId.clienteId.apellido}`,
+                        email: audiencia.casoId.clienteId.email
+                    };
+                }
+            }
+            
+            return audienciaFormateada;
+        });
+        
+        res.status(200).json({ audiencias: audienciasProcesadas });
+    } catch (error) {
+        console.error('Error al obtener audiencias:', error);
+        res.status(500).json({ message: 'Error al obtener las audiencias', error: error.message });
+    }
+};
+
+/**
+ * Obtiene los detalles de un caso específico
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
 exports.obtenerDetalleCaso = async (req, res) => {
     try {
         const { id } = req.params;
+        const abogadoId = req.user.id;
         
         // Verificar que el id sea un ObjectId válido de MongoDB
         if (!id.match(/^[0-9a-fA-F]{24}$/)) {
             return res.status(400).json({ message: 'ID de caso inválido' });
         }
         
-        // Obtener caso completo con todas las relaciones
-        const caso = await Caso.findById(id)
+        // Buscar el caso y verificar que pertenezca al abogado
+        const caso = await Caso.findOne({ _id: id, abogadoId })
             .populate('clienteId', 'nombre apellido email telefono')
-            .populate('abogadoId', 'nombre apellido email')
-            .populate('juezId', 'nombre apellido')
-            .populate({
-                path: 'comentarios.autor',
-                select: 'nombre apellido rol'
-            });
+            .populate('abogadoId', 'nombre apellido email telefono')
+            .populate('comentarios.autor', 'nombre apellido email rol')
+            .lean();
             
         if (!caso) {
             return res.status(404).json({ message: 'Caso no encontrado' });
         }
         
-        res.status(200).json({ caso });
+        // Formatear datos del caso para la respuesta
+        const casoFormateado = {
+            _id: caso._id,
+            numeroExpediente: caso.numeroExpediente,
+            titulo: caso.titulo,
+            descripcion: caso.descripcion,
+            tipo: caso.tipo,
+            estado: caso.estado,
+            fechaRegistro: caso.fechaRegistro,
+            fechaActualizacion: caso.fechaActualizacion,
+            prioridad: caso.prioridad,
+            documentos: caso.documentos || [],
+            comentarios: caso.comentarios.map(c => ({
+                _id: c._id,
+                texto: c.texto,
+                fecha: c.fecha,
+                autor: {
+                    _id: c.autor._id,
+                    nombre: `${c.autor.nombre} ${c.autor.apellido}`,
+                    email: c.autor.email,
+                    rol: c.autor.rol
+                },
+                visto: c.visto
+            }))
+        };
         
+        // Agregar información del cliente si existe
+        if (caso.clienteId) {
+            casoFormateado.cliente = {
+                _id: caso.clienteId._id,
+                nombre: `${caso.clienteId.nombre} ${caso.clienteId.apellido}`,
+                email: caso.clienteId.email,
+                telefono: caso.clienteId.telefono
+            };
+        }
+        
+        // Agregar información del abogado si existe
+        if (caso.abogadoId) {
+            casoFormateado.abogado = {
+                _id: caso.abogadoId._id,
+                nombre: `${caso.abogadoId.nombre} ${caso.abogadoId.apellido}`,
+                email: caso.abogadoId.email,
+                telefono: caso.abogadoId.telefono
+            };
+        }
+        
+        // Obtener audiencias relacionadas con el caso
+        const audiencias = await Audiencia.find({ casoId: id })
+            .sort({ fecha: 1 })
+            .lean();
+            
+        casoFormateado.audiencias = audiencias.map(a => ({
+            _id: a._id,
+            titulo: a.titulo,
+            fecha: a.fecha,
+            hora: a.hora,
+            lugar: a.lugar,
+            tipo: a.tipo,
+            estado: a.estado
+        }));
+        
+        res.status(200).json(casoFormateado);
     } catch (error) {
         console.error('Error al obtener detalle del caso:', error);
-        res.status(500).json({ message: 'Error al obtener detalles del caso', error: error.message });
+        res.status(500).json({ message: 'Error al obtener los detalles del caso', error: error.message });
     }
 };
 
 /**
- * Añadir un comentario o nota al caso
+ * Agrega un comentario a un caso
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
-exports.agregarNotaCaso = async (req, res) => {
+exports.agregarComentario = async (req, res) => {
     try {
         const { id } = req.params;
         const { texto } = req.body;
         const abogadoId = req.user.id;
         
+        // Validar entrada
         if (!texto || texto.trim() === '') {
-            return res.status(400).json({ message: 'El texto del comentario es requerido' });
+            return res.status(400).json({ message: 'El comentario no puede estar vacío' });
         }
         
         // Buscar el caso
@@ -582,11 +437,7 @@ exports.agregarNotaCaso = async (req, res) => {
             return res.status(404).json({ message: 'Caso no encontrado' });
         }
         
-        // Registrar quién agregó la nota
-        caso.ultimaActualizacionPor = abogadoId;
-        caso.fechaActualizacion = new Date();
-        
-        // Agregar comentario con campo de visto
+        // Agregar comentario
         caso.comentarios.push({
             autor: abogadoId,
             rol: 'abogado',
@@ -716,6 +567,888 @@ exports.renderDetalleCaso = async (req, res) => {
         res.status(500).render('error', { 
             message: 'Error al cargar la página de detalle del caso', 
             error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Renderiza la vista de mis datos profesionales
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderMisDatos = async (req, res) => {
+    try {
+        // Obtener datos completos del abogado desde la base de datos
+        const abogado = await User.findById(req.user.id);
+        
+        if (!abogado) {
+            return res.status(404).render('error', { 
+                message: 'Usuario no encontrado',
+                error: {}
+            });
+        }
+        
+        res.render('abogado/mis-datos', {
+            user: abogado,
+            title: 'Mis Datos Profesionales',
+            currentPath: '/abogado/mis-datos'
+        });
+    } catch (error) {
+        console.error('Error al renderizar mis datos:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar la página de datos profesionales', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Actualiza los datos profesionales del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.actualizarDatosAbogado = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { nombre, apellido, email, telefono, especialidad, colegiatura, biografia } = req.body;
+        
+        // Validar los datos recibidos
+        if (!nombre || !apellido || !email) {
+            return res.status(400).json({ message: 'Los campos nombre, apellido y email son obligatorios' });
+        }
+        
+        // Actualizar los datos del abogado
+        const abogadoActualizado = await User.findByIdAndUpdate(
+            abogadoId,
+            {
+                nombre,
+                apellido,
+                email,
+                telefono,
+                especialidad,
+                colegiatura,
+                biografia
+            },
+            { new: true }
+        ).select('-contrasena');
+        
+        if (!abogadoActualizado) {
+            return res.status(404).json({ message: 'Abogado no encontrado' });
+        }
+        
+        res.status(200).json({
+            message: 'Datos actualizados correctamente',
+            abogado: abogadoActualizado
+        });
+        
+    } catch (error) {
+        console.error('Error al actualizar datos del abogado:', error);
+        res.status(500).json({ 
+            message: 'Error al actualizar los datos profesionales', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene los datos de un abogado específico por su ID
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerAbogadoPorId = async (req, res) => {
+    try {
+        const abogadoId = req.params.id;
+        
+        // Verificar que el ID sea válido
+        if (!abogadoId || !abogadoId.match(/^[0-9a-fA-F]{24}$/)) {
+            return res.status(400).json({ message: 'ID de abogado inválido' });
+        }
+        
+        // Buscar el abogado en la base de datos
+        const abogado = await User.findOne({ _id: abogadoId, rol: 'abogado' })
+            .select('nombre apellido email telefono especialidad colegiatura')
+            .lean();
+        
+        if (!abogado) {
+            return res.status(404).json({ message: 'Abogado no encontrado' });
+        }
+        
+        // Devolver los datos del abogado
+        res.status(200).json(abogado);
+        
+    } catch (error) {
+        console.error('Error al obtener datos del abogado:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener los datos del abogado', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene casos con paginación para el abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosConPaginacion = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { estado, pagina = 1, limite = 10 } = req.query;
+        
+        // Construir filtro
+        const filtro = { abogadoId };
+        if (estado && estado !== 'todos') {
+            filtro.estado = estado;
+        }
+        
+        // Calcular skip para paginación
+        const skip = (parseInt(pagina) - 1) * parseInt(limite);
+        
+        // Obtener total de casos para la paginación
+        const total = await Caso.countDocuments(filtro);
+        
+        // Obtener casos paginados
+        const casos = await Caso.find(filtro)
+            .sort({ fechaRegistro: -1 })
+            .skip(skip)
+            .limit(parseInt(limite))
+            .populate('clienteId', 'nombre apellido email')
+            .lean();
+        
+        res.status(200).json({
+            casos,
+            paginacion: {
+                total,
+                pagina: parseInt(pagina),
+                limite: parseInt(limite),
+                paginas: Math.ceil(total / parseInt(limite))
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener casos paginados:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener la lista de casos', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene estadísticas del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerEstadisticasAbogado = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        // Contar casos por estado
+        const casosPorEstado = await Caso.aggregate([
+            { $match: { abogadoId: new mongoose.Types.ObjectId(abogadoId) } },
+            { $group: { _id: "$estado", count: { $sum: 1 } } }
+        ]);
+        
+        // Contar audiencias por mes (últimos 6 meses)
+        const fechaInicio = new Date();
+        fechaInicio.setMonth(fechaInicio.getMonth() - 5);
+        fechaInicio.setDate(1);
+        fechaInicio.setHours(0, 0, 0, 0);
+        
+        const audienciasPorMes = await Audiencia.aggregate([
+            { 
+                $match: { 
+                    abogadoId: new mongoose.Types.ObjectId(abogadoId),
+                    fecha: { $gte: fechaInicio }
+                } 
+            },
+            {
+                $group: {
+                    _id: { 
+                        year: { $year: "$fecha" },
+                        month: { $month: "$fecha" }
+                    },
+                    count: { $sum: 1 }
+                }
+            },
+            { $sort: { "_id.year": 1, "_id.month": 1 } }
+        ]);
+        
+        // Formatear datos para estadísticas
+        const estadisticas = {
+            casosPorEstado: {
+                pendientes: 0,
+                aceptados: 0,
+                iniciados: 0,
+                finalizados: 0,
+                rechazados: 0
+            },
+            audienciasPorMes: []
+        };
+        
+        // Procesar casos por estado
+        casosPorEstado.forEach(item => {
+            if (estadisticas.casosPorEstado.hasOwnProperty(item._id)) {
+                estadisticas.casosPorEstado[item._id] = item.count;
+            }
+        });
+        
+        // Procesar audiencias por mes
+        const meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        
+        // Inicializar últimos 6 meses
+        const hoy = new Date();
+        for (let i = 0; i < 6; i++) {
+            const fecha = new Date(hoy);
+            fecha.setMonth(hoy.getMonth() - i);
+            const year = fecha.getFullYear();
+            const month = fecha.getMonth() + 1;
+            
+            estadisticas.audienciasPorMes.unshift({
+                etiqueta: `${meses[month-1]} ${year}`,
+                valor: 0,
+                year,
+                month
+            });
+        }
+        
+        // Actualizar con datos reales
+        audienciasPorMes.forEach(item => {
+            const { year, month } = item._id;
+            const audienciaItem = estadisticas.audienciasPorMes.find(
+                m => m.year === year && m.month === month
+            );
+            
+            if (audienciaItem) {
+                audienciaItem.valor = item.count;
+            }
+        });
+        
+        res.status(200).json(estadisticas);
+    } catch (error) {
+        console.error('Error al obtener estadísticas:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener las estadísticas', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Renderiza la vista para crear audiencia
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderCrearAudiencia = async (req, res) => {
+    try {
+        res.render('abogado/crearAudiencia', {
+            user: req.user,
+            title: 'Crear Audiencia',
+            currentPath: '/abogado/crearAudiencia'
+        });
+    } catch (error) {
+        console.error('Error al renderizar crear audiencia:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar la página de crear audiencia', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Obtiene las salas disponibles para audiencias
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerSalasDisponibles = async (req, res) => {
+    try {
+        const { fecha, hora } = req.query;
+        
+        if (!fecha || !hora) {
+            return res.status(400).json({ message: 'Fecha y hora son requeridos' });
+        }
+        
+        // Convertir a fecha y hora de inicio/fin
+        const fechaAudiencia = new Date(fecha);
+        const [horaInicio, minutosInicio] = hora.split(':').map(Number);
+        
+        fechaAudiencia.setHours(horaInicio, minutosInicio, 0, 0);
+        
+        // Calcular hora de fin (asumiendo 1 hora de duración)
+        const fechaFin = new Date(fechaAudiencia);
+        fechaFin.setHours(fechaAudiencia.getHours() + 1);
+        
+        // Buscar audiencias que se solapan con ese horario
+        const audienciasExistentes = await Audiencia.find({
+            fecha: { $gte: fechaAudiencia, $lt: fechaFin }
+        }).select('salaId');
+        
+        // Obtener IDs de salas ocupadas
+        const salasOcupadas = audienciasExistentes.map(a => a.salaId.toString());
+        
+        // Buscar todas las salas y filtrar las disponibles
+        const todasLasSalas = await Sala.find().lean();
+        const salasDisponibles = todasLasSalas.filter(sala => 
+            !salasOcupadas.includes(sala._id.toString())
+        );
+        
+        res.status(200).json(salasDisponibles);
+    } catch (error) {
+        console.error('Error al obtener salas disponibles:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener las salas disponibles', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene los casos aceptados por el abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosAceptados = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        // Obtener casos en estado aceptado o iniciado
+        const casos = await Caso.find({
+            abogadoId,
+            estado: { $in: ['aceptado', 'iniciado'] }
+        })
+        .select('_id titulo numeroExpediente clienteId')
+        .populate('clienteId', 'nombre apellido')
+        .lean();
+        
+        res.status(200).json(casos);
+    } catch (error) {
+        console.error('Error al obtener casos aceptados:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener los casos aceptados', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Crea una nueva audiencia
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.crearAudiencia = async (req, res) => {
+    try {
+        const { casoId, fecha, hora, salaId, descripcion } = req.body;
+        const abogadoId = req.user.id;
+        
+        // Validar datos requeridos
+        if (!casoId || !fecha || !hora || !salaId) {
+            return res.status(400).json({ message: 'Todos los campos son obligatorios' });
+        }
+        
+        // Verificar que el caso exista y pertenezca al abogado
+        const caso = await Caso.findOne({ _id: casoId, abogadoId });
+        if (!caso) {
+            return res.status(404).json({ message: 'Caso no encontrado o no asignado a este abogado' });
+        }
+        
+        // Verificar que la sala exista
+        const sala = await Sala.findById(salaId);
+        if (!sala) {
+            return res.status(404).json({ message: 'Sala no encontrada' });
+        }
+        
+        // Convertir a fecha y hora
+        const fechaAudiencia = new Date(fecha);
+        const [horaInicio, minutosInicio] = hora.split(':').map(Number);
+        fechaAudiencia.setHours(horaInicio, minutosInicio, 0, 0);
+        
+        // Crear la audiencia
+        const nuevaAudiencia = new Audiencia({
+            casoId,
+            abogadoId,
+            juezId: caso.juezId,
+            clienteId: caso.clienteId,
+            fecha: fechaAudiencia,
+            salaId,
+            descripcion: descripcion || `Audiencia para caso ${caso.titulo}`,
+            estado: 'programada'
+        });
+        
+        await nuevaAudiencia.save();
+        
+        res.status(201).json({
+            message: 'Audiencia creada correctamente',
+            audiencia: nuevaAudiencia
+        });
+    } catch (error) {
+        console.error('Error al crear audiencia:', error);
+        res.status(500).json({ 
+            message: 'Error al crear la audiencia', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Agrega una nota a un caso
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.agregarNotaCaso = async (req, res) => {
+    try {
+        const casoId = req.params.id;
+        const abogadoId = req.user.id;
+        const { contenido } = req.body;
+        
+        // Validar contenido
+        if (!contenido || contenido.trim() === '') {
+            return res.status(400).json({ message: 'El contenido de la nota es obligatorio' });
+        }
+        
+        // Verificar que el caso exista y pertenezca al abogado
+        const caso = await Caso.findOne({ _id: casoId, abogadoId });
+        if (!caso) {
+            return res.status(404).json({ message: 'Caso no encontrado o no asignado a este abogado' });
+        }
+        
+        // Crear la nota
+        const nuevaNota = {
+            autor: abogadoId,
+            contenido,
+            fecha: new Date(),
+            tipo: 'nota'
+        };
+        
+        // Agregar la nota al caso
+        caso.comentarios.push(nuevaNota);
+        await caso.save();
+        
+        // Poblar el autor para devolver datos completos
+        await caso.populate({
+            path: 'comentarios.autor',
+            select: 'nombre apellido rol'
+        });
+        
+        res.status(201).json({
+            message: 'Nota agregada correctamente',
+            nota: caso.comentarios[caso.comentarios.length - 1]
+        });
+    } catch (error) {
+        console.error('Error al agregar nota:', error);
+        res.status(500).json({ 
+            message: 'Error al agregar la nota al caso', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Renderiza la vista de audiencias del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderAudiencias = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        // Obtener audiencias del abogado
+        const audiencias = await Audiencia.find({ abogadoId })
+            .sort({ fecha: -1 })
+            .populate({
+                path: 'casoId',
+                select: 'numeroExpediente titulo clienteId',
+                populate: {
+                    path: 'clienteId',
+                    select: 'nombre apellido'
+                }
+            })
+            .populate('salaId', 'nombre ubicacion')
+            .lean();
+        
+        res.render('abogado/audiencias', {
+            user: req.user,
+            title: 'Mis Audiencias',
+            currentPath: '/abogado/audiencias',
+            audiencias
+        });
+    } catch (error) {
+        console.error('Error al renderizar audiencias:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar las audiencias', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Obtiene las audiencias del abogado para la API
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerAudiencias = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { estado, pagina = 1, limite = 10 } = req.query;
+        
+        // Construir filtro
+        const filtro = { abogadoId };
+        if (estado && estado !== 'todas') {
+            filtro.estado = estado;
+        }
+        
+        // Calcular skip para paginación
+        const skip = (parseInt(pagina) - 1) * parseInt(limite);
+        
+        // Obtener total de audiencias para la paginación
+        const total = await Audiencia.countDocuments(filtro);
+        
+        // Obtener audiencias paginadas
+        const audiencias = await Audiencia.find(filtro)
+            .sort({ fecha: -1 })
+            .skip(skip)
+            .limit(parseInt(limite))
+            .populate({
+                path: 'casoId',
+                select: 'numeroExpediente titulo clienteId',
+                populate: {
+                    path: 'clienteId',
+                    select: 'nombre apellido'
+                }
+            })
+            .populate('salaId', 'nombre ubicacion')
+            .lean();
+        
+        res.status(200).json({
+            audiencias,
+            paginacion: {
+                total,
+                pagina: parseInt(pagina),
+                limite: parseInt(limite),
+                paginas: Math.ceil(total / parseInt(limite))
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener audiencias:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener las audiencias', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Renderiza la vista de casos del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderCasos = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        res.render('abogado/casos', {
+            user: req.user,
+            title: 'Mis Casos',
+            currentPath: '/abogado/casos'
+        });
+    } catch (error) {
+        console.error('Error al renderizar casos:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar los casos', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Renderiza la vista de detalle de un caso
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderDetalleCaso = async (req, res) => {
+    try {
+        const casoId = req.params.id;
+        const abogadoId = req.user.id;
+        
+        // Verificar que el caso exista y pertenezca al abogado
+        const caso = await Caso.findOne({ _id: casoId, abogadoId })
+            .populate('clienteId', 'nombre apellido email telefono')
+            .populate('abogadoId', 'nombre apellido email telefono')
+            .populate('juezId', 'nombre apellido')
+            .populate({
+                path: 'comentarios.autor',
+                select: 'nombre apellido rol'
+            })
+            .lean();
+            
+        if (!caso) {
+            return res.status(404).render('error', { 
+                message: 'Caso no encontrado o no tienes permiso para verlo', 
+                error: {}
+            });
+        }
+        
+        // Obtener audiencias relacionadas con el caso
+        const audiencias = await Audiencia.find({ casoId })
+            .sort({ fecha: 1 })
+            .populate('salaId', 'nombre ubicacion')
+            .lean();
+            
+        // Formatear audiencias para mostrar hora
+        audiencias.forEach(audiencia => {
+            const fechaObj = new Date(audiencia.fecha);
+            audiencia.hora = fechaObj.getHours().toString().padStart(2, '0') + ':' + 
+                          fechaObj.getMinutes().toString().padStart(2, '0');
+        });
+        
+        res.render('abogado/detalleCaso', {
+            user: req.user,
+            title: `Caso: ${caso.titulo}`,
+            currentPath: '/abogado/casos',
+            caso,
+            audiencias
+        });
+    } catch (error) {
+        console.error('Error al renderizar detalle de caso:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar el detalle del caso', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Obtiene los casos del abogado con paginación para la API
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosConPaginacion = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { estado, pagina = 1, limite = 10 } = req.query;
+        
+        // Construir filtro
+        const filtro = { abogadoId };
+        if (estado && estado !== 'todos') {
+            filtro.estado = estado;
+        }
+        
+        // Calcular skip para paginación
+        const skip = (parseInt(pagina) - 1) * parseInt(limite);
+        
+        // Obtener total de casos para la paginación
+        const total = await Caso.countDocuments(filtro);
+        
+        // Obtener casos paginados
+        const casos = await Caso.find(filtro)
+            .sort({ fechaRegistro: -1 })
+            .skip(skip)
+            .limit(parseInt(limite))
+            .populate('clienteId', 'nombre apellido email')
+            .lean();
+        
+        res.status(200).json({
+            casos,
+            paginacion: {
+                total,
+                pagina: parseInt(pagina),
+                limite: parseInt(limite),
+                paginas: Math.ceil(total / parseInt(limite))
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener casos con paginación:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener los casos', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene los casos del abogado para el dashboard (sin paginación)
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerCasosAbogado = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        
+        const casos = await Caso.find({ abogadoId })
+            .sort({ fechaRegistro: -1 })
+            .populate('clienteId', 'nombre apellido email')
+            .lean();
+        
+        res.status(200).json(casos);
+    } catch (error) {
+        console.error('Error al obtener casos del abogado:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener los casos', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Renderiza la vista de mis datos del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.renderMisDatos = async (req, res) => {
+    try {
+        res.render('abogado/mis-datos', {
+            user: req.user,
+            title: 'Mis Datos Profesionales',
+            currentPath: '/abogado/mis-datos'
+        });
+    } catch (error) {
+        console.error('Error al renderizar mis datos:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar la página de mis datos', 
+            error: process.env.NODE_ENV === 'development' ? error : {}
+        });
+    }
+};
+
+/**
+ * Actualiza los datos profesionales del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.actualizarDatosAbogado = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { especialidad, colegiatura, telefono, direccion } = req.body;
+        
+        // Validar datos
+        if (!especialidad || !especialidad.trim()) {
+            return res.status(400).json({ message: 'La especialidad es requerida' });
+        }
+        
+        if (!colegiatura || !colegiatura.trim() || !/^\d{10}$/.test(colegiatura)) {
+            return res.status(400).json({ message: 'El número de colegiatura debe tener 10 dígitos numéricos' });
+        }
+        
+        // Actualizar datos del abogado
+        const datosActualizados = {
+            especialidad: especialidad.trim(),
+            colegiatura: colegiatura.trim(),
+            estado: 'activo' // Asegurar que el estado se mantenga como activo
+        };
+        
+        // Agregar campos opcionales si están presentes
+        if (telefono) datosActualizados.telefono = telefono.trim();
+        if (direccion) datosActualizados.direccion = direccion.trim();
+        
+        // Actualizar en la base de datos
+        const abogadoActualizado = await User.findByIdAndUpdate(
+            abogadoId,
+            datosActualizados,
+            { new: true, runValidators: true }
+        );
+        
+        if (!abogadoActualizado) {
+            return res.status(404).json({ message: 'Abogado no encontrado' });
+        }
+        
+        res.status(200).json({
+            message: 'Datos actualizados correctamente',
+            abogado: {
+                nombre: abogadoActualizado.nombre,
+                apellido: abogadoActualizado.apellido,
+                email: abogadoActualizado.email,
+                especialidad: abogadoActualizado.especialidad,
+                colegiatura: abogadoActualizado.colegiatura,
+                telefono: abogadoActualizado.telefono,
+                direccion: abogadoActualizado.direccion,
+                estado: abogadoActualizado.estado
+            }
+        });
+    } catch (error) {
+        console.error('Error al actualizar datos del abogado:', error);
+        res.status(500).json({ 
+            message: 'Error al actualizar los datos', 
+            error: error.message 
+        });
+    }
+};
+
+/**
+ * Obtiene las audiencias del abogado con paginación para la API
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerAudiencias = async (req, res) => {
+    try {
+        const abogadoId = req.user.id;
+        const { estado, tipo, desde, hasta, pagina = 1, limite = 10 } = req.query;
+        
+        // Construir filtro
+        const filtro = { abogadoId };
+        if (estado && estado !== 'todos') {
+            filtro.estado = estado;
+        }
+        if (tipo && tipo !== 'todos') {
+            filtro.tipo = tipo;
+        }
+        
+        // Filtro por rango de fechas
+        if (desde || hasta) {
+            filtro.fecha = {};
+            if (desde) {
+                filtro.fecha.$gte = new Date(desde);
+            }
+            if (hasta) {
+                filtro.fecha.$lte = new Date(hasta);
+            }
+        }
+        
+        // Calcular skip para paginación
+        const skip = (parseInt(pagina) - 1) * parseInt(limite);
+        
+        // Obtener total de audiencias para la paginación
+        const total = await Audiencia.countDocuments(filtro);
+        
+        // Obtener audiencias paginadas
+        const audiencias = await Audiencia.find(filtro)
+            .sort({ fecha: 1 })
+            .skip(skip)
+            .limit(parseInt(limite))
+            .populate({ 
+                path: 'casoId', 
+                select: 'numeroExpediente titulo clienteId', 
+                populate: { 
+                    path: 'clienteId', 
+                    select: 'nombre apellido' 
+                } 
+            })
+            .populate('salaId', 'nombre ubicacion')
+            .lean();
+        
+        // Formatear fechas y horas para mejor visualización
+        audiencias.forEach(audiencia => {
+            if (audiencia.fecha) {
+                const fechaObj = new Date(audiencia.fecha);
+                audiencia.fechaFormateada = fechaObj.toLocaleDateString();
+                audiencia.hora = fechaObj.getHours().toString().padStart(2, '0') + ':' + 
+                              fechaObj.getMinutes().toString().padStart(2, '0');
+            }
+        });
+        
+        res.status(200).json({
+            audiencias,
+            pagination: {
+                total,
+                page: parseInt(pagina),
+                limit: parseInt(limite),
+                totalPages: Math.ceil(total / parseInt(limite)),
+                hasPrevPage: parseInt(pagina) > 1,
+                hasNextPage: parseInt(pagina) < Math.ceil(total / parseInt(limite))
+            }
+        });
+    } catch (error) {
+        console.error('Error al obtener audiencias con paginación:', error);
+        res.status(500).json({ 
+            message: 'Error al obtener las audiencias', 
+            error: error.message 
         });
     }
 };

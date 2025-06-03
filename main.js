@@ -51,6 +51,11 @@ app.use('/api/casos', casoRoutes);
 app.use('/abogado', abogadoRoutes); // Añadir rutas de abogado
 app.use('/juez', juezRoutes); // Usar las rutas de juez
 
+// Ruta específica para obtener datos de un abogado (para el cliente)
+const { verifyToken, allowRoles } = require('./middlewares/authMiddleware');
+const abogadoController = require('./controllers/abogadoController');
+app.get('/api/abogados/:id', verifyToken, allowRoles('cliente', 'abogado'), abogadoController.obtenerAbogadoPorId);
+
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
 .then(() => {
@@ -93,6 +98,48 @@ app.get('/cliente/dashboard', verifyViewToken, viewAllowRoles('cliente'), (req, 
 
 app.get('/cliente/crearCaso', verifyViewToken, viewAllowRoles('cliente'), (req, res) => {
     res.render('cliente/crearCaso', { user: req.user });
+});
+
+app.get('/cliente/visualizacion-casos', verifyViewToken, viewAllowRoles('cliente'), (req, res) => {
+    res.render('cliente/visualizacion-casos', { 
+        user: req.user,
+        currentPath: '/cliente/visualizacion-casos'
+    });
+});
+
+app.get('/cliente/caso/:id', verifyViewToken, viewAllowRoles('cliente'), async (req, res) => {
+    try {
+        const casoId = req.params.id;
+        const clienteId = req.user.id;
+        
+        // Importar el modelo de Caso
+        const Caso = require('./models/caso');
+        
+        // Buscar el caso asegurándose que pertenezca al cliente actual
+        const caso = await Caso.findOne({ _id: casoId, clienteId })
+            .populate('abogadoId', 'nombre apellido')
+            .populate('juezId', 'nombre apellido')
+            .populate('comentarios.autor', 'nombre apellido rol');
+            
+        if (!caso) {
+            return res.status(404).render('error', { 
+                message: 'Caso no encontrado o no tienes permisos para verlo',
+                error: { status: 404 }
+            });
+        }
+        
+        res.render('cliente/detalle-caso', {
+            user: req.user,
+            caso,
+            currentPath: '/cliente/visualizacion-casos'
+        });
+    } catch (error) {
+        console.error('Error al obtener detalles del caso:', error);
+        res.status(500).render('error', { 
+            message: 'Error al cargar los detalles del caso',
+            error: { status: 500 }
+        });
+    }
 });
 
 app.get('/chat', (req, res) => {

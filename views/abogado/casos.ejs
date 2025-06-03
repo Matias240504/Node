@@ -446,7 +446,7 @@
                 
                 try {
                     // Construir URL con parámetros de filtro
-                    let url = `/abogado/api/casos-paginados?page=${page}&limit=${limit}`;
+                    let url = `/abogado/api/casos-paginados?pagina=${page}&limite=${limit}`;
                     
                     // Añadir filtros si están seleccionados
                     if (estadoFilter.value) url += `&estado=${estadoFilter.value}`;
@@ -471,10 +471,10 @@
                     actualizarTablaCasos(data.casos);
                     
                     // Actualizar paginación
-                    actualizarPaginacion(data.pagination);
+                    actualizarPaginacion(data.paginacion);
                     
                     // Actualizar contador de resultados
-                    resultsCounter.textContent = `Mostrando ${data.casos.length} de ${data.pagination.total} casos`;
+                    resultsCounter.textContent = `Mostrando ${data.casos.length} de ${data.paginacion.total} casos`;
                     
                 } catch (error) {
                     console.error('Error al cargar casos:', error);
@@ -547,12 +547,12 @@
                 paginationContainer.innerHTML = '';
                 
                 // Si solo hay una página, no mostrar paginación
-                if (paginationData.totalPages <= 1) return;
+                if (paginationData.paginas <= 1) return;
                 
                 // Botón "Anterior"
                 const prevButton = document.createElement('button');
                 prevButton.innerHTML = `<i class="fas fa-chevron-left"></i>`;
-                prevButton.disabled = !paginationData.hasPrevPage;
+                prevButton.disabled = !(paginationData.pagina > 1);
                 prevButton.addEventListener('click', () => {
                     currentPage--;
                     cargarCasos(currentPage);
@@ -560,8 +560,8 @@
                 paginationContainer.appendChild(prevButton);
                 
                 // Determinar rango de páginas a mostrar
-                let startPage = Math.max(1, paginationData.page - 2);
-                let endPage = Math.min(paginationData.totalPages, startPage + 4);
+                let startPage = Math.max(1, paginationData.pagina - 2);
+                let endPage = Math.min(paginationData.paginas, startPage + 4);
                 
                 // Ajustar el inicio si estamos cerca del final
                 if (endPage - startPage < 4) {
@@ -573,7 +573,7 @@
                     const pageButton = document.createElement('button');
                     pageButton.textContent = i;
                     
-                    if (i === paginationData.page) {
+                    if (i === paginationData.pagina) {
                         pageButton.classList.add('active');
                     }
                     
@@ -588,7 +588,7 @@
                 // Botón "Siguiente"
                 const nextButton = document.createElement('button');
                 nextButton.innerHTML = `<i class="fas fa-chevron-right"></i>`;
-                nextButton.disabled = !paginationData.hasNextPage;
+                nextButton.disabled = !(paginationData.pagina < paginationData.paginas);
                 nextButton.addEventListener('click', () => {
                     currentPage++;
                     cargarCasos(currentPage);

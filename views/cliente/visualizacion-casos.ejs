@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <%- include('./partials/styles', {title: 'Visualización de Casos'}) %>
+    <style>
+        /* Estilos específicos para la visualización de casos */
+        .casos-container {
+            margin-top: 20px;
+        }
+        
+        .caso-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            padding: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .caso-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .caso-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        .caso-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-color);
+            margin: 0;
+        }
+        
+        .caso-expediente {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+        
+        .caso-estado {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-transform: capitalize;
+        }
+        
+        .estado-enviado {
+            background-color: #e5f6fd;
+            color: #0288d1;
+        }
+        
+        .estado-aceptado {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .estado-denegado {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .estado-iniciado {
+            background-color: #fff8e1;
+            color: #ffa000;
+        }
+        
+        .estado-finalizado {
+            background-color: #e8eaf6;
+            color: #3f51b5;
+        }
+        
+        .caso-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .info-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 5px;
+        }
+        
+        .info-value {
+            font-size: 0.95rem;
+            color: var(--text-color);
+        }
+        
+        .caso-descripcion {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .descripcion-label {
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+        
+        .descripcion-texto {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+        
+        .caso-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn-detalle {
+            padding: 8px 15px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+        
+        .btn-detalle:hover {
+            background-color: var(--primary-dark-color);
+        }
+        
+        /* Estilos para los filtros */
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            background-color: var(--light-color);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        
+        .filter-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .filter-item label {
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            color: var(--text-secondary-color);
+        }
+        
+        .filter-item select,
+        .filter-item input {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-actions {
+            display: flex;
+            align-items: flex-end;
+            gap: 10px;
+        }
+        
+        .filter-actions button {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .apply-filter {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .reset-filter {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+        }
+        
+        /* Paginación */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 5px;
+        }
+        
+        .pagination button {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .pagination button:hover:not(:disabled) {
+            background-color: var(--light-color);
+        }
+        
+        .pagination button.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .pagination button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Estado de carga */
+        .loading-indicator {
+            display: none;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        
+        .loading-indicator.active {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-left-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Contador de resultados */
+        .results-counter {
+            margin-bottom: 15px;
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+        
+        /* Mensaje de no resultados */
+        .no-results {
+            text-align: center;
+            padding: 30px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .no-results i {
+            font-size: 3rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 15px;
+        }
+        
+        .no-results p {
+            font-size: 1.1rem;
+            color: var(--text-color);
+            margin-bottom: 10px;
+        }
+        
+        .no-results .suggestion {
+            font-size: 0.9rem;
+            color: var(--text-secondary-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <%- include('./partials/sidebar', {currentPath: '/cliente/visualizacion-casos'}) %>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Visualización de Casos</h2>
+                <div>
+                    <span id="currentDate"></span>
+                </div>
+            </div>
+            
+            <!-- Filtros -->
+            <div class="filters-container">
+                <div class="filter-item">
+                    <label for="estado-filter">Estado</label>
+                    <select id="estado-filter">
+                        <option value="">Todos</option>
+                        <option value="enviado">Enviado</option>
+                        <option value="aceptado">Aceptado</option>
+                        <option value="denegado">Denegado</option>
+                        <option value="iniciado">Iniciado</option>
+                        <option value="finalizado">Finalizado</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="tipo-filter">Tipo de Caso</label>
+                    <select id="tipo-filter">
+                        <option value="">Todos</option>
+                        <option value="divorcio">Divorcio</option>
+                        <option value="contrato_laboral">Contrato Laboral</option>
+                        <option value="propiedad_intelectual">Propiedad Intelectual</option>
+                        <option value="herencia">Herencia</option>
+                        <option value="inmobiliario">Inmobiliario</option>
+                        <option value="inscripcion">Inscripción</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="filter-item">
+                    <label for="busqueda">Buscar</label>
+                    <input type="text" id="busqueda" placeholder="Expediente, título...">
+                </div>
+                
+                <div class="filter-actions">
+                    <button class="apply-filter" id="apply-filters">
+                        <i class="fas fa-search"></i> Aplicar Filtros
+                    </button>
+                    <button class="reset-filter" id="reset-filters">
+                        <i class="fas fa-undo"></i> Restablecer
+                    </button>
+                </div>
+            </div>
+            
+            <div class="results-counter" id="results-counter">Mostrando 0 casos</div>
+            
+            <!-- Indicador de carga -->
+            <div class="loading-indicator" id="loading-indicator">
+                <div class="spinner"></div>
+            </div>
+            
+            <!-- Contenedor de casos -->
+            <div class="casos-container" id="casos-container">
+                <!-- Los casos se cargarán dinámicamente aquí -->
+            </div>
+            
+            <!-- Paginación -->
+            <div class="pagination" id="pagination">
+                <!-- Los elementos de paginación se generarán dinámicamente -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts comunes -->
+    <%- include('../partials/scripts') %>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const casosContainer = document.getElementById('casos-container');
+            const paginationContainer = document.getElementById('pagination');
+            const loadingIndicator = document.getElementById('loading-indicator');
+            const resultsCounter = document.getElementById('results-counter');
+            const estadoFilter = document.getElementById('estado-filter');
+            const tipoFilter = document.getElementById('tipo-filter');
+            const busquedaInput = document.getElementById('busqueda');
+            const applyFiltersBtn = document.getElementById('apply-filters');
+            const resetFiltersBtn = document.getElementById('reset-filters');
+            const currentDateElement = document.getElementById('currentDate');
+            
+            // Configuración inicial
+            let currentPage = 1;
+            
+            // Mostrar fecha actual
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDateElement.textContent = new Date().toLocaleDateString('es-ES', options);
+            
+            // Función para cargar los casos
+            async function cargarCasos(page) {
+                try {
+                    // Mostrar indicador de carga
+                    loadingIndicator.classList.add('active');
+                    casosContainer.innerHTML = '';
+                    
+                    // Construir URL con parámetros de filtro
+                    const params = new URLSearchParams();
+                    params.append('page', page);
+                    params.append('limit', 5); // 5 casos por página
+                    
+                    // Añadir filtros si están seleccionados
+                    if (estadoFilter.value) params.append('estado', estadoFilter.value);
+                    if (tipoFilter.value) params.append('tipo', tipoFilter.value);
+                    if (busquedaInput.value.trim()) params.append('busqueda', busquedaInput.value.trim());
+                    
+                    // Realizar petición a la API
+                    const response = await fetch(`/api/casos/cliente/detallados?${params.toString()}`, {
+                        headers: {
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al cargar los casos');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Ocultar indicador de carga
+                    loadingIndicator.classList.remove('active');
+                    
+                    // Actualizar contador de resultados
+                    resultsCounter.textContent = `Mostrando ${data.casos.length} de ${data.paginacion.totalCasos} casos`;
+                    
+                    // Si no hay casos, mostrar mensaje
+                    if (data.casos.length === 0) {
+                        casosContainer.innerHTML = `
+                            <div class="no-results">
+                                <i class="fas fa-search"></i>
+                                <p>No se encontraron casos que coincidan con los filtros.</p>
+                                <div class="suggestion">Intenta con otros criterios de búsqueda o <button id="clear-filters" class="btn-link">limpia los filtros</button>.</div>
+                            </div>
+                        `;
+                        
+                        document.getElementById('clear-filters').addEventListener('click', () => {
+                            resetFiltersBtn.click();
+                        });
+                        
+                        return;
+                    }
+                    
+                    // Renderizar los casos
+                    data.casos.forEach(caso => {
+                        // Formatear fechas
+                        const fechaRegistro = new Date(caso.fechaRegistro).toLocaleDateString('es-ES');
+                        const fechaActualizacion = caso.fechaActualizacion ? new Date(caso.fechaActualizacion).toLocaleDateString('es-ES') : 'N/A';
+                        
+                        // Obtener nombres de abogado y juez si existen
+                        const abogadoNombre = caso.abogadoId ? `${caso.abogadoId.nombre} ${caso.abogadoId.apellido}` : 'No asignado';
+                        const juezNombre = caso.juezId ? `${caso.juezId.nombre} ${caso.juezId.apellido}` : 'No asignado';
+                        
+                        // Crear elemento de caso
+                        const casoElement = document.createElement('div');
+                        casoElement.className = 'caso-card';
+                        casoElement.innerHTML = `
+                            <div class="caso-header">
+                                <div>
+                                    <h3 class="caso-title">${caso.titulo}</h3>
+                                    <div class="caso-expediente">${caso.numeroExpediente}</div>
+                                </div>
+                                <span class="caso-estado estado-${caso.estado}">${caso.estado}</span>
+                            </div>
+                            
+                            <div class="caso-info">
+                                <div class="info-item">
+                                    <span class="info-label">Tipo de Caso</span>
+                                    <span class="info-value">${formatTipoCaso(caso.tipo)}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Prioridad</span>
+                                    <span class="info-value">${caso.prioridad || 'Normal'}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Fecha de Registro</span>
+                                    <span class="info-value">${fechaRegistro}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Última Actualización</span>
+                                    <span class="info-value">${fechaActualizacion}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="caso-info">
+                                <div class="info-item">
+                                    <span class="info-label">Abogado Asignado</span>
+                                    <span class="info-value">${abogadoNombre}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Juez Asignado</span>
+                                    <span class="info-value">${juezNombre}</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Archivos Adjuntos</span>
+                                    <span class="info-value">${caso.archivos ? caso.archivos.length : 0} archivos</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Comentarios</span>
+                                    <span class="info-value">${caso.comentarios ? caso.comentarios.length : 0} comentarios</span>
+                                </div>
+                            </div>
+                            
+                            <div class="caso-descripcion">
+                                <div class="descripcion-label">Descripción</div>
+                                <div class="descripcion-texto">${caso.descripcion}</div>
+                            </div>
+                            
+                            <div class="caso-actions">
+                                <button class="btn-detalle" data-id="${caso._id}">Ver Detalles Completos</button>
+                            </div>
+                        `;
+                        
+                        casosContainer.appendChild(casoElement);
+                    });
+                    
+                    // Actualizar paginación
+                    actualizarPaginacion(data.paginacion);
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    loadingIndicator.classList.remove('active');
+                    casosContainer.innerHTML = `
+                        <div class="no-results">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <p>Ocurrió un error al cargar los casos.</p>
+                            <div class="suggestion">Por favor, intenta nuevamente más tarde.</div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Función para formatear el tipo de caso
+            function formatTipoCaso(tipo) {
+                const tiposFormateados = {
+                    'divorcio': 'Divorcio',
+                    'contrato_laboral': 'Contrato Laboral',
+                    'propiedad_intelectual': 'Propiedad Intelectual',
+                    'herencia': 'Herencia',
+                    'inmobiliario': 'Inmobiliario',
+                    'inscripcion': 'Inscripción',
+                    'otro': 'Otro'
+                };
+                
+                return tiposFormateados[tipo] || tipo;
+            }
+            
+            // Función para actualizar la paginación
+            function actualizarPaginacion(paginationData) {
+                paginationContainer.innerHTML = '';
+                
+                // Si solo hay una página, no mostrar paginación
+                if (paginationData.totalPages <= 1) return;
+                
+                // Botón "Anterior"
+                const prevButton = document.createElement('button');
+                prevButton.innerHTML = `<i class="fas fa-chevron-left"></i>`;
+                prevButton.disabled = !paginationData.hasPrevPage;
+                prevButton.addEventListener('click', () => {
+                    currentPage--;
+                    cargarCasos(currentPage);
+                });
+                paginationContainer.appendChild(prevButton);
+                
+                // Determinar rango de páginas a mostrar
+                let startPage = Math.max(1, paginationData.page - 2);
+                let endPage = Math.min(paginationData.totalPages, startPage + 4);
+                
+                // Ajustar el inicio si estamos cerca del final
+                if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                }
+                
+                // Botones de páginas
+                for (let i = startPage; i <= endPage; i++) {
+                    const pageButton = document.createElement('button');
+                    pageButton.textContent = i;
+                    
+                    if (i === paginationData.page) {
+                        pageButton.classList.add('active');
+                    }
+                    
+                    pageButton.addEventListener('click', () => {
+                        currentPage = i;
+                        cargarCasos(currentPage);
+                    });
+                    
+                    paginationContainer.appendChild(pageButton);
+                }
+                
+                // Botón "Siguiente"
+                const nextButton = document.createElement('button');
+                nextButton.innerHTML = `<i class="fas fa-chevron-right"></i>`;
+                nextButton.disabled = !paginationData.hasNextPage;
+                nextButton.addEventListener('click', () => {
+                    currentPage++;
+                    cargarCasos(currentPage);
+                });
+                paginationContainer.appendChild(nextButton);
+            }
+            
+            // Event listeners para los filtros
+            applyFiltersBtn.addEventListener('click', () => {
+                currentPage = 1; // Resetear a la primera página al aplicar filtros
+                cargarCasos(currentPage);
+            });
+            
+            resetFiltersBtn.addEventListener('click', () => {
+                // Limpiar filtros
+                estadoFilter.value = '';
+                tipoFilter.value = '';
+                busquedaInput.value = '';
+                
+                // Cargar casos sin filtros
+                currentPage = 1;
+                cargarCasos(currentPage);
+            });
+            
+            // Permitir filtrar al presionar Enter en el campo de búsqueda
+            busquedaInput.addEventListener('keyup', (event) => {
+                if (event.key === 'Enter') {
+                    currentPage = 1;
+                    cargarCasos(currentPage);
+                }
+            });
+            
+            // Agregar evento click para botones de detalle (delegación de eventos)
+            casosContainer.addEventListener('click', (event) => {
+                if (event.target.classList.contains('btn-detalle')) {
+                    const casoId = event.target.getAttribute('data-id');
+                    window.location.href = `/cliente/caso/${casoId}`;
+                }
+            });
+            
+            // Cargar casos al iniciar la página
+            cargarCasos(currentPage);
+        });
+    </script>
+</body>
+</html>

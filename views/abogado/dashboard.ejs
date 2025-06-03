@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <%- include('./partials/styles', {title: 'Dashboard Abogado'}) %>
+    <%- include('../partials/styles') %>
+    <title>Dashboard Abogado</title>
     <style>
         /* Estilos adicionales para el dashboard del abogado */
         .btn-detalle {
@@ -125,7 +126,7 @@
                             <i class="fas fa-calendar-check"></i>
                         </div>
                     </div>
-                    <div class="card-value">1</div>
+                    <div class="card-value"><%= audiencias && audiencias.length > 0 ? audiencias.length : 0 %></div>
                     <div class="card-description">Próxima: <%= estadisticas.proximaAudiencia %></div>
                 </div>
                 
@@ -147,8 +148,8 @@
                             <i class="fas fa-users"></i>
                         </div>
                     </div>
-                    <div class="card-value">32</div>
-                    <div class="card-description">2 nuevos este mes</div>
+                    <div class="card-value"><%= casos && casos.length > 0 ? new Set(casos.map(c => c.clienteId && c.clienteId._id ? c.clienteId._id.toString() : '')).size : 0 %></div>
+                    <div class="card-description">Clientes en casos activos</div>
                 </div>
             </div>
             
@@ -202,7 +203,6 @@
                         <% } else { %>
                             <tr>
                                 <td colspan="6" style="text-align: center;">No hay casos disponibles</td>
-                                <td colspan="5" style="text-align: center;">No hay casos disponibles</td>
                             </tr>
                         <% } %>
                         </tbody>

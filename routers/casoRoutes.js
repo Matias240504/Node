@@ -68,6 +68,13 @@ router.get('/cliente',
     casoController.obtenerCasosCliente
 );
 
+// Obtener todos los casos de un cliente con detalles completos y paginación
+router.get('/cliente/detallados', 
+    authMiddleware.verifyToken, 
+    authMiddleware.isCliente, 
+    casoController.obtenerCasosClienteDetallados
+);
+
 // Obtener un caso específico por ID
 router.get('/:id', 
     authMiddleware.verifyToken, 
