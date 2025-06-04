@@ -78,32 +78,10 @@ exports.obtenerCasosCliente = async (req, res) => {
         
         const casos = await Caso.find({ clienteId })
             .sort({ fechaRegistro: -1 }) // Ordenar por fecha de registro (más reciente primero)
-            .populate('abogadoId', 'nombre apellido') // Incluir información del abogado asignado
-            .lean(); // Convertir a objeto plano para poder modificarlo
+            .select('numeroExpediente titulo tipo estado fechaRegistro prioridad abogadoId')
+            .populate('abogadoId', 'nombre apellido');
         
-        // Procesar los casos para añadir el nombre completo del abogado
-        const casosProcesados = casos.map(caso => {
-            // Crear un objeto con los campos necesarios
-            const casoFormateado = {
-                _id: caso._id,
-                numeroExpediente: caso.numeroExpediente,
-                titulo: caso.titulo,
-                tipo: caso.tipo,
-                estado: caso.estado,
-                fechaRegistro: caso.fechaRegistro,
-                prioridad: caso.prioridad
-            };
-            
-            // Añadir información del abogado si existe
-            if (caso.abogadoId) {
-                casoFormateado.abogadoNombre = `${caso.abogadoId.nombre} ${caso.abogadoId.apellido}`;
-                casoFormateado.abogadoId = caso.abogadoId._id;
-            }
-            
-            return casoFormateado;
-        });
-        
-        res.status(200).json({ casos: casosProcesados });
+        res.status(200).json({ casos });
     } catch (error) {
         console.error('Error al obtener casos:', error);
         res.status(500).json({ message: 'Error al obtener los casos', error: error.message });
@@ -180,89 +158,5 @@ exports.obtenerEstadisticasCasos = async (req, res) => {
     } catch (error) {
         console.error('Error al obtener estadísticas:', error);
         res.status(500).json({ message: 'Error al obtener estadísticas', error: error.message });
-    }
-};
-
-/**
- * Obtiene todos los casos de un cliente con detalles completos y paginación
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerCasosClienteDetallados = async (req, res) => {
-    try {
-        const clienteId = req.user.id; // Obtenido del middleware de autenticación
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const skip = (page - 1) * limit;
-        
-        // Filtros base (siempre filtrar por clienteId)
-        const filtros = { clienteId };
-        
-        // Filtro por estado
-        if (req.query.estado && req.query.estado !== '') {
-            filtros.estado = req.query.estado;
-        }
-        
-        // Filtro por tipo
-        if (req.query.tipo && req.query.tipo !== '') {
-            filtros.tipo = req.query.tipo;
-        }
-        
-        // Filtro por texto (búsqueda en título y número de expediente)
-        if (req.query.busqueda && req.query.busqueda !== '') {
-            const terminoBusqueda = req.query.busqueda;
-            filtros.$or = [
-                { numeroExpediente: { $regex: terminoBusqueda, $options: 'i' } },
-                { titulo: { $regex: terminoBusqueda, $options: 'i' } }
-            ];
-        }
-        
-        // Filtro por fecha
-        if (req.query.fechaDesde && req.query.fechaDesde !== '') {
-            if (!filtros.fechaRegistro) filtros.fechaRegistro = {};
-            filtros.fechaRegistro.$gte = new Date(req.query.fechaDesde);
-        }
-        
-        if (req.query.fechaHasta && req.query.fechaHasta !== '') {
-            if (!filtros.fechaRegistro) filtros.fechaRegistro = {};
-            const fechaHasta = new Date(req.query.fechaHasta);
-            fechaHasta.setHours(23, 59, 59, 999); // Fin del día
-            filtros.fechaRegistro.$lte = fechaHasta;
-        }
-        
-        // Consulta para obtener los casos filtrados con paginación
-        const casos = await Caso.find(filtros)
-            .sort({ fechaRegistro: -1 })
-            .skip(skip)
-            .limit(limit)
-            .populate('abogadoId', 'nombre apellido')
-            .populate('juezId', 'nombre apellido')
-            .lean();
-        
-        // Contar el total de casos que coinciden con los filtros
-        const totalCasos = await Caso.countDocuments(filtros);
-        
-        // Calcular información de paginación
-        const totalPages = Math.ceil(totalCasos / limit);
-        const hasPrevPage = page > 1;
-        const hasNextPage = page < totalPages;
-        
-        res.status(200).json({
-            casos,
-            paginacion: {
-                page,
-                limit,
-                totalCasos,
-                totalPages,
-                hasPrevPage,
-                hasNextPage
-            }
-        });
-    } catch (error) {
-        console.error('Error al obtener casos detallados:', error);
-        res.status(500).json({ 
-            message: 'Error al obtener casos detallados', 
-            error: error.message 
-        });
     }
 };

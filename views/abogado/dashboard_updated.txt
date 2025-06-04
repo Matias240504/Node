@@ -68,7 +68,40 @@
         .btn-link i {
             font-size: 0.8rem;
         }
-        /* Los estilos para .user-info, .user-avatar y .logout-btn se han movido a dashboardCommon.css */
+        .user-info {
+            margin-top: auto;
+            padding-top: var(--spacing-md);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: var(--spacing-sm);
+        }
+        
+        .logout-btn {
+            position: absolute;
+            right: 0;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+        
+        .logout-btn:hover {
+            color: white;
+        }
         
         /* Estilos para insignias de asignación */
         .assigned-badge {
@@ -94,7 +127,7 @@
 <body>
     <div class="dashboard-container">
         <!-- Sidebar -->
-        <%- include('./partials/sidebar', {currentPath: '/abogado/dashboard'}) %>
+        <%- include('../partials/sidebar', {currentPath: '/abogado/dashboard'}) %>
         
         <!-- Main Content -->
         <div class="main-content">
@@ -210,6 +243,64 @@
                 </div>
             </div>
             
+            <!-- Próximas Audiencias -->
+            <div class="section">
+                <div class="section-header">
+                    <h3 class="section-title">Próximas Audiencias</h3>
+                    <a href="/abogado/audiencias"><button>Ver todas <i class="fas fa-arrow-right"></i></button></a>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Caso #</th>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        <% if (audiencias && audiencias.length > 0) { %>
+                            <% audiencias.forEach(function(audiencia) { %>
+                            <tr>
+                                <td><%= audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible' %></td>
+                                <td><%= audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado' %></td>
+                                <td><%= audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1) %></td>
+                                <td><%= new Date(audiencia.fecha).toLocaleDateString() %></td>
+                                <td><%= audiencia.hora %></td>
+                                <td>
+                                    <% let statusClass = '';
+                                    switch(audiencia.estado) {
+                                        case 'aprobada':
+                                            statusClass = 'status-active';
+                                            break;
+                                        case 'pendiente':
+                                            statusClass = 'status-pending';
+                                            break;
+                                        case 'completada':
+                                            statusClass = 'status-completed';
+                                            break;
+                                        case 'cancelada':
+                                            statusClass = 'status-canceled';
+                                            break;
+                                    } %>
+                                    <span class="status <%= statusClass %>"><%= audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1) %></span>
+                                </td>
+                            </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" style="text-align: center;">No hay audiencias programadas</td>
+                            </tr>
+                        <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Audiencias Creadas -->
             <div class="section">
                 <div class="section-header">

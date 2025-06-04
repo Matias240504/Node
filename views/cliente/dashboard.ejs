@@ -103,170 +103,6 @@
             color: var(--danger-color);
         }
         
-        /* Estilos para la visualización del abogado */
-        .abogado-info {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        
-        .abogado-icon {
-            font-size: 0.9rem;
-            color: var(--secondary-color);
-        }
-        
-        .abogado-nombre {
-            font-weight: 500;
-            cursor: pointer;
-            color: var(--primary-color);
-            text-decoration: underline;
-            transition: color 0.2s;
-        }
-        
-        .abogado-nombre:hover {
-            color: var(--secondary-color);
-        }
-        
-        .abogado-pendiente {
-            color: var(--warning-color);
-            font-style: italic;
-        }
-        
-        .abogado-no-asignado {
-            color: var(--text-secondary-color);
-            font-style: italic;
-        }
-        
-        /* Estilos para el modal */
-        .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        .modal-content {
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-            animation: modalFadeIn 0.3s ease;
-        }
-        
-        @keyframes modalFadeIn {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            border-bottom: 1px solid #eee;
-        }
-        
-        .modal-header h3 {
-            margin: 0;
-            color: var(--primary-color);
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            color: #888;
-            transition: color 0.2s;
-        }
-        
-        .modal-close:hover {
-            color: var(--danger-color);
-        }
-        
-        .modal-body {
-            padding: 20px;
-        }
-        
-        .abogado-profile {
-            display: flex;
-            margin-bottom: 20px;
-        }
-        
-        .abogado-avatar {
-            width: 80px;
-            height: 80px;
-            background-color: #f0f0f0;
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-right: 20px;
-        }
-        
-        .abogado-avatar i {
-            font-size: 2.5rem;
-            color: var(--secondary-color);
-        }
-        
-        .abogado-details h4 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: var(--primary-color);
-        }
-        
-        .abogado-details p {
-            margin: 5px 0;
-            color: var(--text-color);
-        }
-        
-        .abogado-contact {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-        }
-        
-        .abogado-contact h5 {
-            margin-top: 0;
-            margin-bottom: 10px;
-            color: var(--secondary-color);
-        }
-        
-        .abogado-contact p {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 8px 0;
-        }
-        
-        .abogado-contact i {
-            color: var(--secondary-color);
-        }
-        
-        .abogado-message .note {
-            background-color: rgba(52, 152, 219, 0.1);
-            padding: 10px;
-            border-radius: 6px;
-            border-left: 4px solid var(--secondary-color);
-            font-size: 0.9rem;
-        }
-        
-        .error-message {
-            color: var(--danger-color);
-            text-align: center;
-            padding: 15px;
-        }
-        
         #refreshCasesBtn {
             display: flex;
             align-items: center;
@@ -280,7 +116,7 @@
 </head>
 <body>
     <div class="dashboard-container">
-        <%- include('../cliente/partials/sidebar', {currentPath: '/cliente/dashboard'}) %>
+        <%- include('./partials/sidebar', {currentPath: '/cliente/dashboard'}) %>
 
         <!-- Main Content -->
         <div class="main-content">
@@ -381,6 +217,31 @@
         </div>
     </div>
 
+    <!-- Modal para mostrar detalles del abogado -->
+    <div class="modal" id="abogadoModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Abogado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="abogadoNombre"></span></p>
+                    <p><strong>Email:</strong> <span id="abogadoEmail"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="abogadoTelefono"></span></p>
+                    <p><strong>Especialidad:</strong> <span id="abogadoEspecialidad"></span></p>
+                    <p><strong>Colegiatura:</strong> <span id="abogadoColegiatura"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         // Gestión de sesión y token
         function verificarSesion() {
@@ -484,21 +345,6 @@
             return texto.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
         }
         
-        // Función para formatear el tipo de caso
-        function formatearTipoCaso(tipo) {
-            const tiposFormateados = {
-                'divorcio': 'Divorcio',
-                'contrato_laboral': 'Contrato Laboral',
-                'propiedad_intelectual': 'Propiedad Intelectual',
-                'herencia': 'Herencia',
-                'inmobiliario': 'Inmobiliario',
-                'inscripcion': 'Inscripción',
-                'otro': 'Otro'
-            };
-            
-            return tiposFormateados[tipo] || capitalizar(tipo);
-        }
-        
         // Cerrar sesión
         document.getElementById('logoutBtn').addEventListener('click', function() {
             // Eliminar token y datos de usuario
@@ -513,107 +359,6 @@
             window.location.href = '/auth/login';
         });
 
-        // Modal para mostrar información del abogado
-        function mostrarInfoAbogado(abogadoId, abogadoNombre) {
-            // Crear el modal
-            const modalOverlay = document.createElement('div');
-            modalOverlay.className = 'modal-overlay';
-            
-            const modalContent = document.createElement('div');
-            modalContent.className = 'modal-content';
-            
-            // Contenido del modal
-            modalContent.innerHTML = `
-                <div class="modal-header">
-                    <h3>Información del Abogado</h3>
-                    <button class="modal-close"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="modal-body">
-                    <div class="loading-spinner" id="abogadoLoading"></div>
-                    <div id="abogadoInfo" style="display: none;">
-                        <div class="abogado-profile">
-                            <div class="abogado-avatar">
-                                <i class="fas fa-user-tie"></i>
-                            </div>
-                            <div class="abogado-details">
-                                <h4 id="abogadoNombreCompleto">${abogadoNombre}</h4>
-                                <p id="abogadoEspecialidad">Cargando especialidad...</p>
-                                <p id="abogadoExperiencia">Cargando experiencia...</p>
-                            </div>
-                        </div>
-                        <div class="abogado-contact">
-                            <h5>Información de Contacto</h5>
-                            <p><i class="fas fa-envelope"></i> <span id="abogadoEmail">Cargando email...</span></p>
-                            <p><i class="fas fa-phone"></i> <span id="abogadoTelefono">Cargando teléfono...</span></p>
-                        </div>
-                        <div class="abogado-message">
-                            <p class="note"><i class="fas fa-info-circle"></i> Para consultas específicas sobre su caso, utilice la sección de comentarios en los detalles del caso.</p>
-                        </div>
-                    </div>
-                    <div id="abogadoError" style="display: none;">
-                        <p class="error-message"><i class="fas fa-exclamation-triangle"></i> No se pudo cargar la información del abogado.</p>
-                    </div>
-                </div>
-            `;
-            
-            modalOverlay.appendChild(modalContent);
-            document.body.appendChild(modalOverlay);
-            
-            // Cerrar modal al hacer clic en el botón de cerrar o fuera del modal
-            const closeButton = modalContent.querySelector('.modal-close');
-            closeButton.addEventListener('click', () => {
-                document.body.removeChild(modalOverlay);
-            });
-            
-            modalOverlay.addEventListener('click', (e) => {
-                if (e.target === modalOverlay) {
-                    document.body.removeChild(modalOverlay);
-                }
-            });
-            
-            // Cargar información del abogado
-            cargarInformacionAbogado(abogadoId);
-        }
-        
-        // Función para cargar información detallada del abogado
-        async function cargarInformacionAbogado(abogadoId) {
-            const token = localStorage.getItem('token') || getCookie('token');
-            if (!token) return;
-            
-            try {
-                // Mostrar indicador de carga
-                document.getElementById('abogadoLoading').style.display = 'block';
-                document.getElementById('abogadoInfo').style.display = 'none';
-                document.getElementById('abogadoError').style.display = 'none';
-                
-                // Hacer petición real al servidor para obtener datos del abogado
-                const response = await fetch(`/api/abogados/${abogadoId}`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    document.getElementById('abogadoLoading').style.display = 'none';
-                    document.getElementById('abogadoInfo').style.display = 'block';
-                    
-                    // Mostrar los datos reales del abogado
-                    document.getElementById('abogadoNombreCompleto').textContent = `${data.nombre} ${data.apellido}`;
-                    document.getElementById('abogadoEspecialidad').textContent = `Especialidad: ${data.especialidad || 'No especificada'}`;
-                    document.getElementById('abogadoExperiencia').textContent = `Colegiatura: ${data.colegiatura || 'No especificada'}`;
-                    document.getElementById('abogadoEmail').textContent = data.email || 'No disponible';
-                    document.getElementById('abogadoTelefono').textContent = data.telefono || 'No disponible';
-                } else {
-                    throw new Error('Error al cargar datos del abogado');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('abogadoLoading').style.display = 'none';
-                document.getElementById('abogadoError').style.display = 'block';
-            }
-        }
-        
         // Cargar casos del cliente
         async function cargarCasos() {
             const token = localStorage.getItem('token') || getCookie('token');
@@ -683,46 +428,9 @@
                             // Formatear el tipo de caso
                             const tipoFormateado = formatearTipoCaso(caso.tipo);
                             
-                            // Determinar el abogado asignado y su clase CSS
-                            let abogadoHTML = '';
-                            
-                            if (caso.abogadoNombre) {
-                                abogadoHTML = `
-                                    <div class="abogado-info" title="Abogado asignado a su caso">
-                                        <i class="fas fa-user-tie abogado-icon"></i>
-                                        <span class="abogado-nombre" data-abogado-id="${caso.abogadoId}">${caso.abogadoNombre}</span>
-                                    </div>
-                                `;
-                            } else if (caso.estado === 'enviado') {
-                                abogadoHTML = `
-                                    <div class="abogado-info" title="Su caso está siendo revisado por nuestro equipo">
-                                        <i class="fas fa-clock abogado-icon"></i>
-                                        <span class="abogado-pendiente">Abogados en revisión</span>
-                                    </div>
-                                `;
-                            } else if (caso.estado === 'aceptado') {
-                                abogadoHTML = `
-                                    <div class="abogado-info" title="Su caso ha sido aceptado y pronto se le asignará un abogado">
-                                        <i class="fas fa-user-clock abogado-icon"></i>
-                                        <span class="abogado-pendiente">Asignación pendiente</span>
-                                    </div>
-                                `;
-                            } else if (caso.estado === 'denegado') {
-                                abogadoHTML = `
-                                    <div class="abogado-info" title="Su caso ha sido denegado">
-                                        <i class="fas fa-times-circle abogado-icon"></i>
-                                        <span class="abogado-no-asignado">Caso denegado</span>
-                                    </div>
-                                `;
-                            } else {
-                                abogadoHTML = `
-                                    <div class="abogado-info" title="No hay abogado asignado a este caso">
-                                        <i class="fas fa-user-slash abogado-icon"></i>
-                                        <span class="abogado-no-asignado">No asignado</span>
-                                    </div>
-                                `;
-                            }
-                            
+                            // Determinar el abogado asignado
+                            const abogado = caso.abogadoId ? `<a href="#" class="abogado-link" data-id="${caso.abogadoId}">${caso.abogadoNombre || 'Asignado'}</a>` : 'Abogados en revisión';
+                            console.log(caso);
                             // Crear la fila
                             const fila = document.createElement('tr');
                             fila.innerHTML = `
@@ -731,17 +439,8 @@
                                 <td>${tipoFormateado}</td>
                                 <td>${fechaFormateada}</td>
                                 <td><span class="status ${estadoClase}">${capitalizar(caso.estado)}</span></td>
-                                <td>${abogadoHTML}</td>
+                                <td>${abogado}</td>
                             `;
-                            
-                            // Añadir evento de clic para mostrar información del abogado
-                            if (caso.abogadoNombre && caso.abogadoId) {
-                                const abogadoElement = fila.querySelector('.abogado-nombre');
-                                abogadoElement.addEventListener('click', function(e) {
-                                    e.preventDefault();
-                                    mostrarInfoAbogado(caso.abogadoId, caso.abogadoNombre);
-                                });
-                            }
                             
                             casosContainer.appendChild(fila);
                         });
@@ -808,6 +507,66 @@
         document.getElementById('refreshCasesBtn').addEventListener('click', function() {
             cargarCasos();
         });
+        
+        // Evento para abrir modal con detalles del abogado
+        $(document).on('click', '.abogado-link', async function(event) {
+            event.preventDefault();
+
+            const abogadoId = $(this).data('id');
+            const token = localStorage.getItem('token') || getCookie('token');
+
+            // Mostrar un loader o desactivar el botón si quieres
+            $('#abogadoModal').find('.modal-body').text('Cargando datos del abogado...');
+            $('#abogadoModal').modal('show');
+
+            try {
+                const response = await fetch(`/api/abogado/${abogadoId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Si el token no es válido o expiró
+                if (response.status === 401) {
+                    alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Si el abogado no se encuentra
+                if (response.status === 404) {
+                    $('#abogadoModal').modal('hide');
+                    alert('Abogado no encontrado');
+                    return;
+                }
+
+                // Verifica otros errores
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.abogado) {
+                    $('#abogadoNombre').text(`${data.abogado.nombre} ${data.abogado.apellido}`);
+                    $('#abogadoEmail').text(data.abogado.email);
+                    $('#abogadoTelefono').text(data.abogado.telefono);
+                    $('#abogadoEspecialidad').text(data.abogado.especialidad);
+                    $('#abogadoColegiatura').text(data.abogado.colegiatura);
+                } else {
+                    $('#abogadoModal').modal('hide');
+                    alert('No se encontraron datos del abogado');
+                }
+
+            } catch (error) {
+                console.error('Error al obtener datos del abogado:', error);
+                $('#abogadoModal').modal('hide');
+                alert('Ocurrió un error al obtener los datos del abogado. Intenta nuevamente.');
+            }
+        });
+
         
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function () {

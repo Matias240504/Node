@@ -13,7 +13,7 @@ router.get('/dashboard', verifyViewToken, viewAllowRoles('abogado'), abogadoCont
 router.get('/api/casos', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosAbogado);
 
 // API para obtener casos del abogado con paginación (para la vista de casos)
-router.get('/api/casos-con-paginacion', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosConPaginacion);
+router.get('/api/casos-paginados', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosConPaginacion);
 
 // API para obtener estadísticas
 router.get('/api/estadisticas', verifyToken, allowRoles('abogado'), abogadoController.obtenerEstadisticasAbogado);
@@ -39,8 +39,11 @@ router.get('/api/casos/:id', verifyToken, allowRoles('abogado'), abogadoControll
 router.post('/api/casos/:id/nota', verifyToken, allowRoles('abogado'), abogadoController.agregarNotaCaso);
 router.put('/api/casos/:id/estado', verifyToken, allowRoles('abogado'), abogadoController.actualizarEstadoCaso);
 
-// Rutas para mis datos
+// Rutas para datos profesionales
 router.get('/mis-datos', verifyViewToken, viewAllowRoles('abogado'), abogadoController.renderMisDatos);
 router.put('/api/actualizar-datos', verifyToken, allowRoles('abogado'), abogadoController.actualizarDatosAbogado);
+
+// API para obtener datos de abogado por ID
+router.get('/api/abogado/:id', verifyToken, allowRoles('cliente', 'abogado'), abogadoController.obtenerDatosAbogado);
 
 module.exports = router;
