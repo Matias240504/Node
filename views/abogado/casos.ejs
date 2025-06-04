@@ -133,6 +133,54 @@
             font-size: 0.9rem;
             color: var(--text-secondary-color);
         }
+        
+        /* Modal para mostrar detalles del caso */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-overlay.active {
+            display: flex;
+        }
+        
+        .modal-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            display: none;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .modal-close {
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -225,156 +273,15 @@
         </div>
     </div>
     
-    <!-- Modal de Detalle de Caso -->
+    <!-- Modal para mostrar detalles del caso -->
     <div class="modal-overlay" id="modalOverlay">
         <div class="modal-container">
             <div class="modal-header">
-                <h3 class="modal-title">Detalle del Caso</h3>
-                <button class="modal-close">&times;</button>
+                <h3 class="modal-title">Detalles del Caso</h3>
+                <button class="modal-close" onclick="cerrarModal()">&times;</button>
             </div>
-            <div class="modal-body">
-                <!-- Spinner de carga -->
-                <div class="modal-loading-spinner" id="modalLoadingSpinner">
-                    <div class="spinner"></div>
-                    <p>Cargando información del caso...</p>
-                </div>
-                
-                <!-- Contenido principal del modal -->
-                <div id="modalCasoContent" style="display: none;">
-                    <!-- Cabecera con título y estado -->
-                    <div class="caso-header">
-                        <div class="caso-header-info">
-                            <h1 id="casoTitulo">Cargando título...</h1>
-                            <div class="caso-expediente" id="casoExpediente">Expediente: Cargando...</div>
-                        </div>
-                        <div class="caso-estado" id="casoEstadoBadge">Cargando...</div>
-                    </div>
-                    
-                    <!-- Contenido organizado en tabs/pestañas -->
-                    <div class="caso-tabs">
-                        <div class="tabs-header">
-                            <button class="tab-btn active" id="btn-info" onclick="mostrarPestana('info')">Información</button>
-                            <button class="tab-btn" id="btn-actions" onclick="mostrarPestana('actions')">Acciones</button>
-                            <button class="tab-btn" id="btn-comments" onclick="mostrarPestana('comments')">Comentarios <span class="badge-count" id="commentsCount">0</span></button>
-                        </div>
-                        
-                        <!-- Tab de Información -->
-                        <div class="tab-content active" id="info">
-                            <div class="section-header">
-                                <h2>Información del Caso</h2>
-                                <span class="badge" id="casoPrioridad">Cargando...</span>
-                            </div>
-                            
-                            <div class="info-cards">
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <h3>Descripción</h3>
-                                        <i class="fas fa-file-alt info-icon"></i>
-                                    </div>
-                                    <div class="info-card-body">
-                                        <p id="casoDescripcion">Cargando...</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <h3>Tipo de Caso</h3>
-                                        <i class="fas fa-tag info-icon"></i>
-                                    </div>
-                                    <div class="info-card-body">
-                                        <p id="casoTipo">Cargando...</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <h3>Cliente</h3>
-                                        <i class="fas fa-user info-icon"></i>
-                                    </div>
-                                    <div class="info-card-body">
-                                        <p id="casoCliente">Cargando...</p>
-                                        <p id="casoClienteContacto">Cargando...</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <h3>Fechas</h3>
-                                        <i class="fas fa-calendar-alt info-icon"></i>
-                                    </div>
-                                    <div class="info-card-body">
-                                        <p><strong>Registro:</strong> <span id="casoFechaRegistro">Cargando...</span></p>
-                                        <p><strong>Última actualización:</strong> <span id="casoFechaActualizacion">Cargando...</span></p>
-                                    </div>
-                                </div>
-                                
-                                <div class="info-card">
-                                    <div class="info-card-header">
-                                        <h3>Archivos Adjuntos</h3>
-                                        <i class="fas fa-paperclip info-icon"></i>
-                                    </div>
-                                    <div class="info-card-body">
-                                        <ul class="archivos-list" id="casoArchivos">
-                                            <li>Cargando archivos...</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Tab de Acciones -->
-                        <div class="tab-content" id="actions">
-                            <div class="section-header">
-                                <h2>Acciones del Caso</h2>
-                            </div>
-                            
-                            <div class="action-card">
-                                <div class="action-card-header">
-                                    <h3>Cambiar Estado del Caso</h3>
-                                    <i class="fas fa-exchange-alt action-icon"></i>
-                                </div>
-                                <div class="action-card-body">
-                                    <p>Estado actual: <span class="current-status" id="currentStatus">Cargando...</span></p>
-                                    <div class="action-form">
-                                        <select id="estadoSelector" class="estado-selector">
-                                            <option value="enviado">Enviado</option>
-                                            <option value="aceptado">Aceptado</option>
-                                            <option value="denegado">Denegado</option>
-                                            <option value="iniciado">Iniciado</option>
-                                            <option value="finalizado">Finalizado</option>
-                                        </select>
-                                        <button id="btnCambiarEstado" class="action-btn">
-                                            <i class="fas fa-save"></i> Actualizar Estado
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Tab de Comentarios -->
-                        <div class="tab-content" id="comments">
-                            <div class="section-header">
-                                <h2>Notas y Comentarios</h2>
-                            </div>
-                            
-                            <div class="comentario-form">
-                                <div class="form-header">
-                                    <h3>Agregar nueva nota</h3>
-                                </div>
-                                <div class="form-body">
-                                    <textarea id="nuevoComentario" placeholder="Escribe una nueva nota o comentario..."></textarea>
-                                    <button id="btnAgregarComentario" class="action-btn">
-                                        <i class="fas fa-plus"></i> Agregar Nota
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="comentarios-list" id="comentariosList">
-                                <p class="text-center">Cargando comentarios...</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Los detalles del caso se cargarán aquí -->
             </div>
         </div>
     </div>
@@ -439,163 +346,50 @@
                 return cookieValue ? cookieValue.split('=')[1] : null;
             }
             
-            // Función para cargar casos con paginación y filtros
-            async function cargarCasos(page = 1) {
-                // Mostrar indicador de carga
-                loadingIndicator.classList.add('active');
-                
-                try {
-                    // Construir URL con parámetros de filtro
-                    let url = `/abogado/api/casos-paginados?pagina=${page}&limite=${limit}`;
-                    
-                    // Añadir filtros si están seleccionados
-                    if (estadoFilter.value) url += `&estado=${estadoFilter.value}`;
-                    if (tipoFilter.value) url += `&tipo=${tipoFilter.value}`;
-                    if (busquedaInput.value.trim()) url += `&busqueda=${encodeURIComponent(busquedaInput.value.trim())}`;
-                    
-                    // Obtener token para autorización
-                    const token = obtenerTokenDeCookie();
-                    
-                    // Realizar petición a la API
-                    const response = await fetch(url, {
-                        method: 'GET',
-                        headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    // Actualizar la tabla con los resultados
-                    actualizarTablaCasos(data.casos);
-                    
-                    // Actualizar paginación
-                    actualizarPaginacion(data.paginacion);
-                    
-                    // Actualizar contador de resultados
-                    resultsCounter.textContent = `Mostrando ${data.casos.length} de ${data.paginacion.total} casos`;
-                    
-                } catch (error) {
-                    console.error('Error al cargar casos:', error);
-                    casosTableBody.innerHTML = `
-                        <tr>
-                            <td colspan="5" style="text-align: center; color: red;">
-                                Error al cargar los casos. Intente de nuevo más tarde.
-                            </td>
-                        </tr>
-                    `;
-                } finally {
-                    // Ocultar indicador de carga
-                    loadingIndicator.classList.remove('active');
-                }
-            }
-            
-            // Función para actualizar la tabla de casos
-            function actualizarTablaCasos(casos) {
+            // Nueva función para renderizar casos con acciones
+            function renderizarCasos(casos) {
                 // Limpiar tabla
                 casosTableBody.innerHTML = '';
-                
+
                 if (casos && casos.length > 0) {
-                    // Generar filas de la tabla
                     casos.forEach(caso => {
                         // Determinar clase CSS para estado
                         let statusClass = '';
                         switch(caso.estado) {
                             case 'iniciado':
                             case 'aceptado':
-                                statusClass = 'status-active';
+                                statusClass = 'text-success';
                                 break;
-                            case 'enviado':
-                                statusClass = 'status-pending';
+                            case 'rechazado':
+                                statusClass = 'text-danger';
                                 break;
-                            case 'finalizado':
-                                statusClass = 'status-completed';
-                                break;
-                            case 'denegado':
-                                statusClass = 'status-canceled';
-                                break;
+                            default:
+                                statusClass = 'text-warning';
                         }
-                        
-                        // Crear fila con datos del caso
+
+                        // Crear fila de la tabla
                         const row = document.createElement('tr');
                         row.innerHTML = `
-                            <td>${caso.numeroExpediente}</td>
+                            <td>${caso.numeroExpediente || 'N/A'}</td>
                             <td>${caso.clienteId ? caso.clienteId.nombre + ' ' + caso.clienteId.apellido : 'No asignado'}</td>
-                            <td>${caso.tipo.charAt(0).toUpperCase() + caso.tipo.slice(1).replace('_', ' ')}</td>
-                            <td>${new Date(caso.fechaRegistro).toLocaleDateString()}</td>
-                            <td><span class="status ${statusClass}">${caso.estado.charAt(0).toUpperCase() + caso.estado.slice(1)}</span></td>
-                            <td><button class="btn-detalle" data-id="${caso._id}"><i class="fas fa-eye"></i> Ver detalle</button></td>
+                            <td>${caso.tipo || 'Desconocido'}</td>
+                            <td>${new Date(caso.fechaRegistro).toLocaleDateString() || 'N/A'}</td>
+                            <td class="${statusClass}">${caso.estado || 'Desconocido'}</td>
+                            <td>
+                                <button class="btn btn-info" onclick="abrirDetalleCaso('${caso._id}')">Acciones</button>
+                            </td>
                         `;
-                        
                         casosTableBody.appendChild(row);
                     });
                 } else {
-                    // Mostrar mensaje si no hay casos
                     casosTableBody.innerHTML = `
                         <tr>
-                            <td colspan="5" style="text-align: center;">
-                                No se encontraron casos con los filtros aplicados
-                            </td>
+                            <td colspan="6" style="text-align: center;">No se encontraron casos.</td>
                         </tr>
                     `;
                 }
             }
-            
-            // Función para generar los elementos de paginación
-            function actualizarPaginacion(paginationData) {
-                paginationContainer.innerHTML = '';
-                
-                // Si solo hay una página, no mostrar paginación
-                if (paginationData.paginas <= 1) return;
-                
-                // Botón "Anterior"
-                const prevButton = document.createElement('button');
-                prevButton.innerHTML = `<i class="fas fa-chevron-left"></i>`;
-                prevButton.disabled = !(paginationData.pagina > 1);
-                prevButton.addEventListener('click', () => {
-                    currentPage--;
-                    cargarCasos(currentPage);
-                });
-                paginationContainer.appendChild(prevButton);
-                
-                // Determinar rango de páginas a mostrar
-                let startPage = Math.max(1, paginationData.pagina - 2);
-                let endPage = Math.min(paginationData.paginas, startPage + 4);
-                
-                // Ajustar el inicio si estamos cerca del final
-                if (endPage - startPage < 4) {
-                    startPage = Math.max(1, endPage - 4);
-                }
-                
-                // Botones de páginas
-                for (let i = startPage; i <= endPage; i++) {
-                    const pageButton = document.createElement('button');
-                    pageButton.textContent = i;
-                    
-                    if (i === paginationData.pagina) {
-                        pageButton.classList.add('active');
-                    }
-                    
-                    pageButton.addEventListener('click', () => {
-                        currentPage = i;
-                        cargarCasos(currentPage);
-                    });
-                    
-                    paginationContainer.appendChild(pageButton);
-                }
-                
-                // Botón "Siguiente"
-                const nextButton = document.createElement('button');
-                nextButton.innerHTML = `<i class="fas fa-chevron-right"></i>`;
-                nextButton.disabled = !(paginationData.pagina < paginationData.paginas);
-                nextButton.addEventListener('click', () => {
-                    currentPage++;
-                    cargarCasos(currentPage);
-                });
-                paginationContainer.appendChild(nextButton);
-            }
-            
+
             // Event listeners para los filtros
             applyFiltersBtn.addEventListener('click', () => {
                 currentPage = 1; // Resetear a la primera página al aplicar filtros
@@ -621,8 +415,61 @@
                 }
             });
             
-            // Cargar casos al iniciar la página
-            cargarCasos(currentPage);
+            // Función para cargar casos con paginación y filtros
+            async function cargarCasos(page = 1) {
+                // Mostrar indicador de carga
+                loadingIndicator.classList.add('active');
+
+                try {
+                    // Construir URL con parámetros de filtro
+                    let url = `/abogado/api/casos-con-paginacion?pagina=${page}&limite=${limit}`;
+
+                    // Añadir filtros si están seleccionados
+                    if (estadoFilter.value) url += `&estado=${estadoFilter.value}`;
+                    if (tipoFilter.value) url += `&tipo=${tipoFilter.value}`;
+                    if (busquedaInput.value.trim()) url += `&busqueda=${encodeURIComponent(busquedaInput.value.trim())}`;
+
+                    console.log("URL de la API:", url);
+
+                    // Obtener token para autorización
+                    const token = obtenerTokenDeCookie();
+
+                    // Realizar petición a la API
+                    const response = await fetch(url, {
+                        method: 'GET',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    console.log("Datos recibidos:", data);
+
+                    // Actualizar la tabla con los resultados
+                    renderizarCasos(data.casos);
+
+                    // Actualizar contador de resultados
+                    resultsCounter.textContent = `Mostrando ${data.casos.length} de ${data.paginacion.total} casos`;
+
+                } catch (error) {
+                    console.error('Error al cargar casos:', error);
+                    casosTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center; color: red;">
+                                Error al cargar los casos. Intente de nuevo más tarde.
+                            </td>
+                        </tr>
+                    `;
+                } finally {
+                    // Ocultar indicador de carga
+                    loadingIndicator.classList.remove('active');
+                }
+            }
+
+            // Llama a cargarCasos después de inicializar las variables
+            cargarCasos();
             
             // Agregar evento click para botones de detalle (delegación de eventos)
             $(document).on('click', '.btn-detalle', function() {
@@ -630,12 +477,46 @@
                 window.abrirDetalleCaso(casoId);
             });
         });
+        
+        function abrirDetalleCaso(casoId) {
+            console.log('Botón de acciones clicado para el caso:', casoId);
+            const overlay = document.getElementById('modalOverlay');
+            const container = overlay.querySelector('.modal-container');
+            overlay.classList.add('active');
+            container.style.display = 'block';
+
+            fetch(`/api/casos/${casoId}`)
+                .then(response => {
+                    if (!response.ok) throw new Error('Error al obtener los datos del caso');
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Datos del caso recibidos:', data);
+                    document.getElementById('modalBody').innerHTML = `
+                        <p><strong>Título:</strong> ${data.titulo}</p>
+                        <p><strong>Descripción:</strong> ${data.descripcion}</p>
+                        <p><strong>Tipo:</strong> ${data.tipo}</p>
+                        <p><strong>Expediente:</strong> ${data.numeroExpediente}</p>
+                        <p><strong>Estado:</strong> ${data.estado}</p>
+                    `;
+                })
+                .catch(error => {
+                    console.error('Error al obtener datos del caso:', error);
+                    alert('Error al cargar los datos del caso.');
+                    overlay.classList.remove('active');
+                    container.style.display = 'none';
+                });
+        }
+
+        function cerrarModal() {
+            const overlay = document.getElementById('modalOverlay');
+            const container = overlay.querySelector('.modal-container');
+            overlay.classList.remove('active');
+            container.style.display = 'none';
+        }
     </script>
     
     <!-- Scripts comunes -->
-    <%- include('../partials/scripts') %>
-    
-    <!-- Script para el modal de detalle de caso -->
-    <script src="/js/detalleCasoModal.js"></script>
+    <%- include('./partials/scripts') %>
 </body>
 </html>

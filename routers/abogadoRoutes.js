@@ -13,7 +13,7 @@ router.get('/dashboard', verifyViewToken, viewAllowRoles('abogado'), abogadoCont
 router.get('/api/casos', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosAbogado);
 
 // API para obtener casos del abogado con paginación (para la vista de casos)
-router.get('/api/casos-paginados', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosConPaginacion);
+router.get('/api/casos-con-paginacion', verifyToken, allowRoles('abogado'), abogadoController.obtenerCasosConPaginacion);
 
 // API para obtener estadísticas
 router.get('/api/estadisticas', verifyToken, allowRoles('abogado'), abogadoController.obtenerEstadisticasAbogado);

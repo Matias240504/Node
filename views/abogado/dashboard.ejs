@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <%- include('../partials/styles') %>
+    <%- include('./partials/styles') %>
     <title>Dashboard Abogado</title>
     <style>
         /* Estilos adicionales para el dashboard del abogado */
@@ -119,16 +119,7 @@
                     <div class="card-description">Casos en estado aceptado o iniciado</div>
                 </div>
                 
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="card-title">Próxima Audiencia</h3>
-                        <div class="card-icon" style="background-color: var(--primary-color);">
-                            <i class="fas fa-calendar-check"></i>
-                        </div>
-                    </div>
-                    <div class="card-value"><%= audiencias && audiencias.length > 0 ? audiencias.length : 0 %></div>
-                    <div class="card-description">Próxima: <%= estadisticas.proximaAudiencia %></div>
-                </div>
+
                 
                 <div class="card">
                     <div class="card-header">
@@ -210,63 +201,6 @@
                 </div>
             </div>
             
-            <!-- Próximas Audiencias -->
-            <div class="section">
-                <div class="section-header">
-                    <h3 class="section-title">Próximas Audiencias</h3>
-                    <a href="/abogado/audiencias"><button>Ver todas <i class="fas fa-arrow-right"></i></button></a>
-                </div>
-                
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Caso #</th>
-                                <th>Cliente</th>
-                                <th>Tipo</th>
-                                <th>Fecha</th>
-                                <th>Hora</th>
-                                <th>Estado</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                        <% if (audiencias && audiencias.length > 0) { %>
-                            <% audiencias.forEach(function(audiencia) { %>
-                            <tr>
-                                <td><%= audiencia.casoId ? audiencia.casoId.numeroExpediente : 'No disponible' %></td>
-                                <td><%= audiencia.casoId && audiencia.casoId.clienteId ? audiencia.casoId.clienteId.nombre + ' ' + audiencia.casoId.clienteId.apellido : 'No asignado' %></td>
-                                <td><%= audiencia.tipo.charAt(0).toUpperCase() + audiencia.tipo.slice(1) %></td>
-                                <td><%= new Date(audiencia.fecha).toLocaleDateString() %></td>
-                                <td><%= audiencia.hora %></td>
-                                <td>
-                                    <% let statusClass = '';
-                                    switch(audiencia.estado) {
-                                        case 'aprobada':
-                                            statusClass = 'status-active';
-                                            break;
-                                        case 'pendiente':
-                                            statusClass = 'status-pending';
-                                            break;
-                                        case 'completada':
-                                            statusClass = 'status-completed';
-                                            break;
-                                        case 'cancelada':
-                                            statusClass = 'status-canceled';
-                                            break;
-                                    } %>
-                                    <span class="status <%= statusClass %>"><%= audiencia.estado.charAt(0).toUpperCase() + audiencia.estado.slice(1) %></span>
-                                </td>
-                            </tr>
-                            <% }); %>
-                        <% } else { %>
-                            <tr>
-                                <td colspan="6" style="text-align: center;">No hay audiencias programadas</td>
-                            </tr>
-                        <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
 
             <!-- Audiencias Creadas -->
             <div class="section">
@@ -359,6 +293,7 @@
     </div>
 
     <!-- Scripts base -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         // Mostrar fecha actual
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
