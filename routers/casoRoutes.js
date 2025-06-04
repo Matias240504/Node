@@ -5,6 +5,7 @@ const authMiddleware = require('../middlewares/authMiddleware');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
+const abogadoController = require('../controllers/abogadoController');
 
 // Configuración de multer para la carga de archivos
 const storage = multer.diskStorage({
@@ -68,10 +69,17 @@ router.get('/cliente',
     casoController.obtenerCasosCliente
 );
 
+// Obtener todos los casos de un cliente con detalles completos y paginación
+router.get('/cliente/detallados', 
+    authMiddleware.verifyToken, 
+    authMiddleware.isCliente, 
+    casoController.obtenerCasosClienteDetallados
+);
+
 // Obtener un caso específico por ID
 router.get('/:id', 
     authMiddleware.verifyToken, 
-    casoController.obtenerCasoPorId
+    abogadoController.obtenerDetalleCaso
 );
 
 // Obtener estadísticas de casos para el dashboard

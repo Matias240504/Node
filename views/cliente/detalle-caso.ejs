@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <%- include('./partials/styles', {title: 'Detalle de Caso'}) %>
+    <style>
+        /* Estilos específicos para la página de detalle de caso */
+        .caso-container {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            padding: 25px;
+            margin-top: 20px;
+        }
+        
+        .caso-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .caso-title-section h2 {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin: 0 0 5px 0;
+        }
+        
+        .caso-expediente {
+            font-size: 1rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 10px;
+        }
+        
+        .caso-estado {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            text-transform: capitalize;
+            display: inline-block;
+        }
+        
+        .estado-enviado {
+            background-color: #e5f6fd;
+            color: #0288d1;
+        }
+        
+        .estado-aceptado {
+            background-color: #e8f5e9;
+            color: #388e3c;
+        }
+        
+        .estado-denegado {
+            background-color: #ffebee;
+            color: #d32f2f;
+        }
+        
+        .estado-iniciado {
+            background-color: #fff8e1;
+            color: #ffa000;
+        }
+        
+        .estado-finalizado {
+            background-color: #e8eaf6;
+            color: #3f51b5;
+        }
+        
+        .caso-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .meta-item {
+            flex: 1;
+            min-width: 200px;
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+        }
+        
+        .meta-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary-color);
+            margin-bottom: 5px;
+        }
+        
+        .meta-value {
+            font-size: 1rem;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+        
+        .section-title {
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin: 30px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .descripcion-content {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+        
+        /* Estilos para la sección de archivos */
+        .archivos-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+        
+        .archivo-item {
+            display: flex;
+            align-items: center;
+            background-color: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .archivo-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .archivo-icon {
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            margin-right: 12px;
+        }
+        
+        .archivo-info {
+            flex: 1;
+        }
+        
+        .archivo-nombre {
+            font-size: 0.95rem;
+            color: var(--text-color);
+            margin-bottom: 3px;
+            word-break: break-all;
+        }
+        
+        .archivo-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary-color);
+        }
+        
+        .archivo-download {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            margin-left: 10px;
+        }
+        
+        .no-archivos {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            color: var(--text-secondary-color);
+        }
+        
+        /* Estilos para la sección de comentarios */
+        .comentarios-list {
+            margin-bottom: 25px;
+        }
+        
+        .comentario-item {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+        
+        .comentario-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .comentario-autor {
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        
+        .comentario-rol {
+            font-size: 0.8rem;
+            color: white;
+            background-color: var(--primary-color);
+            padding: 3px 8px;
+            border-radius: 12px;
+            margin-left: 8px;
+        }
+        
+        .comentario-fecha {
+            font-size: 0.85rem;
+            color: var(--text-secondary-color);
+        }
+        
+        .comentario-texto {
+            font-size: 0.95rem;
+            line-height: 1.5;
+            color: var(--text-color);
+        }
+        
+        .no-comentarios {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            color: var(--text-secondary-color);
+        }
+        
+        /* Estilos para la sección de acciones */
+        .acciones-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn-accion {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            margin-left: 10px;
+        }
+        
+        .btn-volver {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+        }
+        
+        .btn-volver:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .btn-comentar {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-comentar:hover {
+            background-color: var(--primary-dark-color);
+        }
+        
+        /* Estilos para el formulario de comentarios */
+        .comentario-form {
+            margin-top: 20px;
+            background-color: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            display: none;
+        }
+        
+        .comentario-form.active {
+            display: block;
+        }
+        
+        .comentario-form textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 0.95rem;
+            min-height: 100px;
+            margin-bottom: 15px;
+        }
+        
+        .comentario-form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+        
+        .btn-cancelar {
+            background-color: #f0f0f0;
+            color: var(--text-color);
+        }
+        
+        .btn-enviar {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        /* Estilos para el modal de archivos */
+        .archivo-preview-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .archivo-preview-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            max-width: 90%;
+            max-height: 90%;
+            overflow: auto;
+            position: relative;
+        }
+        
+        .archivo-preview-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            color: var(--text-color);
+            cursor: pointer;
+        }
+        
+        .archivo-preview-image {
+            max-width: 100%;
+            max-height: 80vh;
+        }
+        
+        .archivo-preview-pdf {
+            width: 100%;
+            height: 80vh;
+        }
+        
+        .archivo-preview-text {
+            white-space: pre-wrap;
+            font-family: monospace;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            overflow: auto;
+            max-height: 80vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <%- include('./partials/sidebar', {currentPath: '/cliente/visualizacion-casos'}) %>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="page-header">
+                <h2 class="page-title">Detalle de Caso</h2>
+                <div>
+                    <button class="btn-volver" id="btn-volver">
+                        <i class="fas fa-arrow-left"></i> Volver a Casos
+                    </button>
+                </div>
+            </div>
+            
+            <div class="caso-container">
+                <!-- Encabezado del caso -->
+                <div class="caso-header">
+                    <div class="caso-title-section">
+                        <h2><%= caso.titulo %></h2>
+                        <div class="caso-expediente">Expediente: <%= caso.numeroExpediente %></div>
+                        <span class="caso-estado estado-<%= caso.estado %>"><%= caso.estado %></span>
+                    </div>
+                    <div class="caso-dates">
+                        <div class="meta-label">Fecha de Registro</div>
+                        <div class="meta-value"><%= new Date(caso.fechaRegistro).toLocaleDateString('es-ES') %></div>
+                        <% if (caso.fechaActualizacion) { %>
+                            <div class="meta-label">Última Actualización</div>
+                            <div class="meta-value"><%= new Date(caso.fechaActualizacion).toLocaleDateString('es-ES') %></div>
+                        <% } %>
+                    </div>
+                </div>
+                
+                <!-- Metadatos del caso -->
+                <div class="caso-meta">
+                    <div class="meta-item">
+                        <div class="meta-label">Tipo de Caso</div>
+                        <div class="meta-value"><%= formatTipoCaso(caso.tipo) %></div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Prioridad</div>
+                        <div class="meta-value"><%= caso.prioridad ? caso.prioridad.charAt(0).toUpperCase() + caso.prioridad.slice(1) : 'Normal' %></div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Abogado Asignado</div>
+                        <div class="meta-value"><%= caso.abogadoId ? `${caso.abogadoId.nombre} ${caso.abogadoId.apellido}` : 'No asignado' %></div>
+                    </div>
+                    <div class="meta-item">
+                        <div class="meta-label">Juez Asignado</div>
+                        <div class="meta-value"><%= caso.juezId ? `${caso.juezId.nombre} ${caso.juezId.apellido}` : 'No asignado' %></div>
+                    </div>
+                </div>
+                
+                <!-- Descripción del caso -->
+                <h3 class="section-title">Descripción del Caso</h3>
+                <div class="descripcion-content">
+                    <%= caso.descripcion %>
+                </div>
+                
+                <!-- Archivos adjuntos -->
+                <h3 class="section-title">Archivos Adjuntos</h3>
+                <% if (caso.archivos && caso.archivos.length > 0) { %>
+                    <div class="archivos-list">
+                        <% caso.archivos.forEach(archivo => { %>
+                            <div class="archivo-item">
+                                <div class="archivo-icon">
+                                    <% if (archivo.tipo.startsWith('image/')) { %>
+                                        <i class="fas fa-file-image"></i>
+                                    <% } else if (archivo.tipo === 'application/pdf') { %>
+                                        <i class="fas fa-file-pdf"></i>
+                                    <% } else if (archivo.tipo.startsWith('text/')) { %>
+                                        <i class="fas fa-file-alt"></i>
+                                    <% } else if (archivo.tipo.includes('word')) { %>
+                                        <i class="fas fa-file-word"></i>
+                                    <% } else if (archivo.tipo.includes('excel') || archivo.tipo.includes('spreadsheet')) { %>
+                                        <i class="fas fa-file-excel"></i>
+                                    <% } else { %>
+                                        <i class="fas fa-file"></i>
+                                    <% } %>
+                                </div>
+                                <div class="archivo-info">
+                                    <div class="archivo-nombre"><%= archivo.nombre %></div>
+                                    <div class="archivo-meta">
+                                        <%= formatFileSize(archivo.tamano) %> • 
+                                        <%= new Date(archivo.fechaSubida).toLocaleDateString('es-ES') %>
+                                    </div>
+                                </div>
+                                <a href="/uploads/<%= archivo.ruta %>" download class="archivo-download" title="Descargar">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="no-archivos">
+                        <i class="fas fa-file-alt"></i>
+                        <p>No hay archivos adjuntos en este caso.</p>
+                    </div>
+                <% } %>
+                
+                <!-- Comentarios -->
+                <h3 class="section-title">Comentarios</h3>
+                <% if (caso.comentarios && caso.comentarios.length > 0) { %>
+                    <div class="comentarios-list">
+                        <% caso.comentarios.forEach(comentario => { %>
+                            <div class="comentario-item">
+                                <div class="comentario-header">
+                                    <div>
+                                        <span class="comentario-autor">
+                                            <%= comentario.autor ? `${comentario.autor.nombre} ${comentario.autor.apellido}` : 'Usuario' %>
+                                        </span>
+                                        <span class="comentario-rol"><%= comentario.rol %></span>
+                                    </div>
+                                    <div class="comentario-fecha">
+                                        <%= new Date(comentario.fecha).toLocaleString('es-ES') %>
+                                    </div>
+                                </div>
+                                <div class="comentario-texto">
+                                    <%= comentario.texto %>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="no-comentarios">
+                        <i class="fas fa-comments"></i>
+                        <p>No hay comentarios en este caso.</p>
+                    </div>
+                <% } %>
+                
+                <!-- Formulario para añadir comentario -->
+                <div class="comentario-form" id="comentario-form">
+                    <textarea id="comentario-texto" placeholder="Escribe tu comentario aquí..."></textarea>
+                    <div class="comentario-form-actions">
+                        <button class="btn-accion btn-cancelar" id="btn-cancelar-comentario">Cancelar</button>
+                        <button class="btn-accion btn-enviar" id="btn-enviar-comentario">Enviar Comentario</button>
+                    </div>
+                </div>
+                
+                <!-- Acciones -->
+                <div class="acciones-container">
+                    <button class="btn-accion btn-comentar" id="btn-comentar">
+                        <i class="fas fa-comment"></i> Añadir Comentario
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para previsualizar archivos -->
+    <div class="archivo-preview-modal" id="archivo-preview-modal">
+        <div class="archivo-preview-content">
+            <div class="archivo-preview-close" id="archivo-preview-close">
+                <i class="fas fa-times"></i>
+            </div>
+            <div id="archivo-preview-container"></div>
+        </div>
+    </div>
+    
+    <!-- Scripts comunes -->
+    <%- include('../abogado/partials/scripts') %>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Elementos del DOM
+            const btnVolver = document.getElementById('btn-volver');
+            const btnComentar = document.getElementById('btn-comentar');
+            const comentarioForm = document.getElementById('comentario-form');
+            const btnCancelarComentario = document.getElementById('btn-cancelar-comentario');
+            const btnEnviarComentario = document.getElementById('btn-enviar-comentario');
+            const comentarioTexto = document.getElementById('comentario-texto');
+            
+            // Botón volver
+            btnVolver.addEventListener('click', () => {
+                window.location.href = '/cliente/visualizacion-casos';
+            });
+            
+            // Mostrar/ocultar formulario de comentarios
+            btnComentar.addEventListener('click', () => {
+                comentarioForm.classList.add('active');
+                comentarioTexto.focus();
+            });
+            
+            btnCancelarComentario.addEventListener('click', () => {
+                comentarioForm.classList.remove('active');
+                comentarioTexto.value = '';
+            });
+            
+            // Enviar comentario
+            btnEnviarComentario.addEventListener('click', async () => {
+                const texto = comentarioTexto.value.trim();
+                
+                if (!texto) {
+                    alert('Por favor, escribe un comentario.');
+                    return;
+                }
+                
+                try {
+                    const response = await fetch(`/api/casos/<%= caso._id %>/comentarios`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        },
+                        body: JSON.stringify({ texto })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Error al enviar el comentario');
+                    }
+                    
+                    // Recargar la página para mostrar el nuevo comentario
+                    location.reload();
+                    
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ocurrió un error al enviar el comentario. Por favor, intenta nuevamente.');
+                }
+            });
+            
+            // Previsualización de archivos
+            const archivosLinks = document.querySelectorAll('.archivo-download');
+            const archivoPreviewModal = document.getElementById('archivo-preview-modal');
+            const archivoPreviewClose = document.getElementById('archivo-preview-close');
+            const archivoPreviewContainer = document.getElementById('archivo-preview-container');
+            
+            // Cerrar modal
+            archivoPreviewClose.addEventListener('click', () => {
+                archivoPreviewModal.style.display = 'none';
+                archivoPreviewContainer.innerHTML = '';
+            });
+            
+            // Cerrar modal al hacer clic fuera del contenido
+            archivoPreviewModal.addEventListener('click', (e) => {
+                if (e.target === archivoPreviewModal) {
+                    archivoPreviewModal.style.display = 'none';
+                    archivoPreviewContainer.innerHTML = '';
+                }
+            });
+        });
+        
+        // Función para formatear el tipo de caso
+        function formatTipoCaso(tipo) {
+            const tiposFormateados = {
+                'divorcio': 'Divorcio',
+                'contrato_laboral': 'Contrato Laboral',
+                'propiedad_intelectual': 'Propiedad Intelectual',
+                'herencia': 'Herencia',
+                'inmobiliario': 'Inmobiliario',
+                'inscripcion': 'Inscripción',
+                'otro': 'Otro'
+            };
+            
+            return tiposFormateados[tipo] || tipo;
+        }
+        
+        // Función para formatear el tamaño de archivo
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            else return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+    </script>
+</body>
+</html>

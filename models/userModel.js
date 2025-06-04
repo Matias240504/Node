@@ -11,7 +11,7 @@ const userSchema = new mongoose.Schema({
   rol: { type: String, enum: ['cliente', 'juez', 'abogado'], default: 'cliente' },
   especialidad: String,          // solo para abogado y juez
   colegiatura: String,           // solo para abogado y juez
-  estado: String,                // solo para abogado y juez
+  estado: { type: String, default: 'activo' },  // solo para abogado y juez
   fechaRegistro: { type: Date, default: Date.now }
 }, {
   timestamps: true

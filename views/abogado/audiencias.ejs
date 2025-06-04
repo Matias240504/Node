@@ -312,7 +312,7 @@
                 
                 try {
                     // Construir URL con parámetros de filtro
-                    let url = `/abogado/api/audiencias?page=${page}&limit=${limit}`;
+                    let url = `/abogado/api/audiencias?pagina=${page}&limite=${limit}`;
                     
                     // Añadir filtros si están seleccionados
                     if (estadoFilter.value) url += `&estado=${estadoFilter.value}`;
@@ -491,6 +491,6 @@
     </script>
     
     <!-- Scripts comunes -->
-    <%- include('../partials/scripts') %>
+    <%- include('./partials/scripts') %>
 </body>
 </html>

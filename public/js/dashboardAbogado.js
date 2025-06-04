@@ -44,7 +44,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             const data = await response.json();
             
-            if (data) {
+            if (data && data.estadosProcesados) {
                 // Actualizar casos activos
                 const casosActivos = data.estadosProcesados.aceptado + data.estadosProcesados.iniciado;
                 casosActivosElement.textContent = formatNumber(casosActivos);
@@ -63,6 +63,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         documentosDescElement.textContent = 'Total de documentos';
                     }
                 }
+            } else {
+                console.warn('La respuesta de la API no contiene estados procesados.');
             }
         } catch (error) {
             console.error('Error al obtener estadísticas:', error);
@@ -137,8 +139,11 @@ document.addEventListener('DOMContentLoaded', function() {
         actualizarCasos();
     }, 5 * 60 * 1000);
     
-    // Manejar click en "Ver todos" para casos
-    document.querySelector('.section:first-of-type button').addEventListener('click', function() {
-        window.location.href = '/abogado/casos';
-    });
+    // Verifica si el botón existe antes de añadir el evento
+    const verTodosButton = document.querySelector('.section:first-of-type button');
+    if (verTodosButton) {
+        verTodosButton.addEventListener('click', function() {
+            window.location.href = '/abogado/casos';
+        });
+    }
 });
