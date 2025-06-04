@@ -719,3 +719,121 @@ exports.renderDetalleCaso = async (req, res) => {
         });
     }
 };
+
+/**
+ * Actualiza los datos profesionales del abogado
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.actualizarDatosAbogado = async (req, res) => {
+    try {
+      const abogadoId = req.user.id;
+      const { especialidad, colegiatura, telefono, direccion } = req.body;
+  
+      // Validar datos
+      if (!especialidad || !especialidad.trim()) {
+        return res.status(400).json({ message: "La especialidad es requerida" });
+      }
+  
+      if (!colegiatura || !colegiatura.trim() || !/^\d{10}$/.test(colegiatura)) {
+        return res.status(400).json({
+          message: "El número de colegiatura debe tener 10 dígitos numéricos",
+        });
+      }
+  
+      // Actualizar datos del abogado
+      const datosActualizados = {
+        especialidad: especialidad.trim(),
+        colegiatura: colegiatura.trim(),
+        estado: "activo", // Asegurar que el estado se mantenga como activo
+      };
+  
+      // Agregar campos opcionales si están presentes
+      if (telefono) datosActualizados.telefono = telefono.trim();
+      if (direccion) datosActualizados.direccion = direccion.trim();
+  
+      // Actualizar en la base de datos
+      const abogadoActualizado = await User.findByIdAndUpdate(
+        abogadoId,
+        datosActualizados,
+        { new: true, runValidators: true }
+      );
+  
+      if (!abogadoActualizado) {
+        return res.status(404).json({ message: "Abogado no encontrado" });
+      }
+  
+      res.status(200).json({
+        message: "Datos actualizados correctamente",
+        abogado: {
+          nombre: abogadoActualizado.nombre,
+          apellido: abogadoActualizado.apellido,
+          email: abogadoActualizado.email,
+          especialidad: abogadoActualizado.especialidad,
+          colegiatura: abogadoActualizado.colegiatura,
+          telefono: abogadoActualizado.telefono,
+          direccion: abogadoActualizado.direccion,
+          estado: abogadoActualizado.estado,
+        },
+      });
+    } catch (error) {
+      console.error("Error al actualizar datos del abogado:", error);
+      res.status(500).json({
+        message: "Error al actualizar los datos",
+        error: error.message,
+      });
+    }
+};
+
+exports.renderMisDatos = async (req, res) => {
+    try {
+      // Obtener datos completos del abogado desde la base de datos
+      const abogado = await User.findById(req.user.id);
+  
+      if (!abogado) {
+        return res.status(404).render("error", {
+          message: "Usuario no encontrado",
+          error: {},
+        });
+      }
+  
+      res.render("abogado/mis-datos", {
+        user: abogado,
+        title: "Mis Datos Profesionales",
+        currentPath: "/abogado/mis-datos",
+      });
+    } catch (error) {
+      console.error("Error al renderizar mis datos:", error);
+      res.status(500).render("error", {
+        message: "Error al cargar la página de datos profesionales",
+        error: process.env.NODE_ENV === "development" ? error : {},
+      });
+    }
+};
+
+/**
+ * Obtiene los datos de un abogado por ID
+ * @param {Object} req - Objeto de solicitud HTTP
+ * @param {Object} res - Objeto de respuesta HTTP
+ */
+exports.obtenerDatosAbogado = async (req, res) => {
+    const { id } = req.params;
+
+    // Validación de formato del ID
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: 'ID de abogado no válido' });
+    }
+
+    try {
+        const abogado = await User.findById(id).select('nombre apellido email telefono especialidad colegiatura');
+
+        if (!abogado) {
+            return res.status(404).json({ message: 'Abogado no encontrado' });
+        }
+
+        res.status(200).json({ abogado });
+    } catch (error) {
+        console.error('[obtenerDatosAbogado] Error:', error);
+        res.status(500).json({ message: 'Error interno del servidor al obtener los datos del abogado' });
+    }
+};

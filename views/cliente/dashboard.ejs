@@ -217,6 +217,31 @@
         </div>
     </div>
 
+    <!-- Modal para mostrar detalles del abogado -->
+    <div class="modal" id="abogadoModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalles del Abogado</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <p><strong>Nombre:</strong> <span id="abogadoNombre"></span></p>
+                    <p><strong>Email:</strong> <span id="abogadoEmail"></span></p>
+                    <p><strong>Teléfono:</strong> <span id="abogadoTelefono"></span></p>
+                    <p><strong>Especialidad:</strong> <span id="abogadoEspecialidad"></span></p>
+                    <p><strong>Colegiatura:</strong> <span id="abogadoColegiatura"></span></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         // Gestión de sesión y token
         function verificarSesion() {
@@ -404,8 +429,8 @@
                             const tipoFormateado = formatearTipoCaso(caso.tipo);
                             
                             // Determinar el abogado asignado
-                            const abogado = caso.abogadoId ? caso.abogadoNombre || 'Asignado' : 'Abogados en revisión';
-                            
+                            const abogado = caso.abogadoId ? `<a href="#" class="abogado-link" data-id="${caso.abogadoId}">${caso.abogadoNombre || 'Asignado'}</a>` : 'Abogados en revisión';
+                            console.log(caso);
                             // Crear la fila
                             const fila = document.createElement('tr');
                             fila.innerHTML = `
@@ -482,6 +507,66 @@
         document.getElementById('refreshCasesBtn').addEventListener('click', function() {
             cargarCasos();
         });
+        
+        // Evento para abrir modal con detalles del abogado
+        $(document).on('click', '.abogado-link', async function(event) {
+            event.preventDefault();
+
+            const abogadoId = $(this).data('id');
+            const token = localStorage.getItem('token') || getCookie('token');
+
+            // Mostrar un loader o desactivar el botón si quieres
+            $('#abogadoModal').find('.modal-body').text('Cargando datos del abogado...');
+            $('#abogadoModal').modal('show');
+
+            try {
+                const response = await fetch(`/api/abogado/${abogadoId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                // Si el token no es válido o expiró
+                if (response.status === 401) {
+                    alert('Tu sesión ha expirado. Por favor, inicia sesión de nuevo.');
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Si el abogado no se encuentra
+                if (response.status === 404) {
+                    $('#abogadoModal').modal('hide');
+                    alert('Abogado no encontrado');
+                    return;
+                }
+
+                // Verifica otros errores
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error ${response.status}: ${errorText}`);
+                }
+
+                const data = await response.json();
+
+                if (data.abogado) {
+                    $('#abogadoNombre').text(`${data.abogado.nombre} ${data.abogado.apellido}`);
+                    $('#abogadoEmail').text(data.abogado.email);
+                    $('#abogadoTelefono').text(data.abogado.telefono);
+                    $('#abogadoEspecialidad').text(data.abogado.especialidad);
+                    $('#abogadoColegiatura').text(data.abogado.colegiatura);
+                } else {
+                    $('#abogadoModal').modal('hide');
+                    alert('No se encontraron datos del abogado');
+                }
+
+            } catch (error) {
+                console.error('Error al obtener datos del abogado:', error);
+                $('#abogadoModal').modal('hide');
+                alert('Ocurrió un error al obtener los datos del abogado. Intenta nuevamente.');
+            }
+        });
+
         
         // Inicializar al cargar la página
         document.addEventListener('DOMContentLoaded', function () {

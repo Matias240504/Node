@@ -78,7 +78,8 @@ exports.obtenerCasosCliente = async (req, res) => {
         
         const casos = await Caso.find({ clienteId })
             .sort({ fechaRegistro: -1 }) // Ordenar por fecha de registro (más reciente primero)
-            .select('numeroExpediente titulo tipo estado fechaRegistro prioridad');
+            .select('numeroExpediente titulo tipo estado fechaRegistro prioridad abogadoId')
+            .populate('abogadoId', 'nombre apellido');
         
         res.status(200).json({ casos });
     } catch (error) {
