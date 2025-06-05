@@ -1,21 +1,78 @@
-const MessageService = require('./services/messageService'); // Importar el servicio de mensajes
-const messageService = new MessageService(); // Crear una instancia del servicio de mensajes
+const MessageService = require("./services/messageService");
+const OllamaService = require("./services/ollamaService");
+const messageService = new MessageService();
+const ollamaService = new OllamaService();
 
 module.exports = (io) => {
-    //let message = [{username: 'Fake-user', message: 'Hola, soy un mensaje de prueba'}]; // Array para almacenar los mensajes
-    io.on('connection', async (socket) => { // Evento de conexión de Socket.IO
-        console.log('Nuevo cliente conectado'); // Mensaje en la consola al conectar un nuevo cliente
-        const message = await messageService.getAllMessages(); // Obtener todos los mensajes de la base de datos
-        io.emit('all-messages', message); // Enviar los mensajes actuales al nuevo cliente
+  io.on("connection", async (socket) => {
+    console.log("Nuevo cliente conectado XDXDXDX");
 
-        socket.on('writing', (username) => { // Evento cuando un cliente está escribiendo
-            socket.broadcast.emit('writing', username); // Emitir el evento a todos los demás clientes
-        });
+    try {
+      // Enviar mensajes guardados al cliente nuevo
+      const messages = await messageService.getAllMessages();
+      socket.emit("all-messages", messages);
+    } catch (error) {
+      console.error("Error al cargar mensajes:", error);
+    }
 
-        socket.on('new-message', async (data) => { // Evento cuando se recibe un nuevo mensaje
-            await messageService.createMessage(data); // Guardar el nuevo mensaje en la base de datos
-            const message = await messageService.getAllMessages(); // Obtener todos los mensajes actualizados
-            io.emit('all-messages', message); // Enviar todos los mensajes a todos los clientes
+    socket.on("new-message", async (data) => {
+      try {
+        const { username, message } = data;
+        console.log("Mensaje recibido:", { username, message });
+
+        // Guardar y emitir mensaje del usuario inmediatamente
+        const savedUserMessage = await messageService.createMessage({
+          username,
+          message,
         });
+        console.log("Mensaje de usuario guardado:", savedUserMessage);
+        io.emit("new-message", savedUserMessage);
+
+        // Indicar que el bot está escribiendo
+        io.emit("writing", "Asistente");
+
+        // Obtener y procesar respuesta del bot
+        console.log("Solicitando respuesta a Ollama...");
+        const botReply = await ollamaService.getResponseFromOllama(message);
+        console.log("Respuesta de Ollama recibida:", botReply);
+
+        if (botReply && botReply.trim()) {
+          // Pequeña pausa para simular el tiempo de escritura
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          // Guardar y emitir respuesta del bot
+          const savedBotMessage = await messageService.createMessage({
+            username: "Asistente",
+            message: botReply.trim(),
+          });
+          console.log("Mensaje del bot guardado:", savedBotMessage);
+          io.emit("new-message", savedBotMessage);
+        } else {
+          // Enviar mensaje de error si la respuesta está vacía
+          const errorMessage = await messageService.createMessage({
+            username: "Asistente",
+            message:
+              "Lo siento, no pude generar una respuesta en este momento.",
+          });
+          io.emit("new-message", errorMessage);
+        }
+      } catch (error) {
+        console.error("Error en el manejo del mensaje:", error);
+
+        // Enviar mensaje de error al chat
+        const errorMessage = await messageService.createMessage({
+          username: "Asistente",
+          message:
+            "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta de nuevo.",
+        });
+        io.emit("new-message", errorMessage);
+
+        // Emitir evento de error para manejo adicional si es necesario
+        socket.emit("error", {
+          message: "Error al procesar el mensaje",
+          details: error.message,
+        });
+      }
     });
-}
+  });
+};
