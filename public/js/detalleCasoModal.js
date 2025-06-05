@@ -90,10 +90,19 @@ window.abrirDetalleCaso = function(casoId) {
         url: `/abogado/api/casos/${casoId}`,
         method: 'GET',
         success: function(response) {
-            const caso = response.caso;
-            casoActual = caso;
+            console.log('Respuesta del servidor:', response); // Para debug
             
-            console.log('Datos del caso cargados:', caso);
+            // Verificar la estructura de la respuesta
+            const caso = response.caso || response;
+            
+            if (!caso) {
+                console.error('No se recibieron datos válidos del caso');
+                alert('Error al cargar los datos del caso. Por favor, intente nuevamente.');
+                cerrarModal();
+                return;
+            }
+
+            casoActual = caso;
             
             // Actualizar información del caso
             actualizarModalConDatosDeCaso(caso);
@@ -120,6 +129,14 @@ window.abrirDetalleCaso = function(casoId) {
 
 // Función para actualizar el modal con los datos del caso
 function actualizarModalConDatosDeCaso(caso) {
+    console.log('Datos del caso recibidos:', caso); // Para debug
+
+    // Verificar que caso existe y tiene las propiedades necesarias
+    if (!caso) {
+        console.error('No se recibieron datos del caso');
+        return;
+    }
+
     // Actualizar título y número de expediente
     $('#casoTitulo').text(caso.titulo);
     $('#casoExpediente').text(`Expediente: ${caso.numeroExpediente}`);

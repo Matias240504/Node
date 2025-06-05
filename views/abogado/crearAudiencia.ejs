@@ -1,218 +1,250 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
+  <head>
     <%- include('./partials/styles', {title: 'Crear Audiencia'}) %>
     <!-- No se necesitan estilos adicionales, todos están en los archivos CSS externos -->
-</head>
-<body>
+  </head>
+  <body>
     <div class="dashboard-container">
-        <!-- Sidebar -->
-        <%- include('./partials/sidebar', {currentPath: '/abogado/crearAudiencia'}) %>
-        
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="page-header">
-                <h2 class="page-title">Crear Nueva Audiencia</h2>
-            </div>
-            
-            <div class="alert alert-success" id="success-alert">
-                <i class="fas fa-check-circle"></i> Audiencia creada exitosamente. Redirigiendo a la lista de audiencias...
-            </div>
-            
-            <div class="alert alert-danger" id="error-alert">
-                <i class="fas fa-exclamation-triangle"></i> Error al crear la audiencia. Por favor, intente nuevamente.
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-calendar-plus"></i> Formulario de Nueva Audiencia</h3>
-                </div>
-                <div class="card-body">
-                    <form id="audienciaForm" class="audiencia-form">
-                        <div class="form-group">
-                            <label for="caso-select">Seleccionar Caso (Estado: Aceptado)</label>
-                            <select id="caso-select" name="casoId" required>
-                                <option value="" disabled selected>Cargando casos...</option>
-                            </select>
-                            <small class="form-text text-muted">Solo se muestran casos en estado 'aceptado'</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="sala-select">Seleccionar Sala (Disponible)</label>
-                            <select id="sala-select" name="salaId" required>
-                                <option value="" disabled selected>Cargando salas...</option>
-                            </select>
-                            <small class="form-text text-muted">Solo se muestran salas con disponibilidad</small>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="tipo-select">Tipo de Audiencia</label>
-                            <select id="tipo-select" name="tipo" required>
-                                <option value="" disabled selected>Seleccione un tipo</option>
-                                <option value="inicial">Inicial</option>
-                                <option value="seguimiento">Seguimiento</option>
-                                <option value="presentacion_pruebas">Presentación de Pruebas</option>
-                                <option value="testimonio">Testimonio</option>
-                                <option value="alegatos">Alegatos</option>
-                                <option value="sentencia">Sentencia</option>
-                                <option value="otro">Otro</option>
-                            </select>
-                        </div>
-                        
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="fecha-input">Fecha</label>
-                                <input type="date" id="fecha-input" name="fecha" required>
-                                <small class="form-text text-muted">Fecha mínima: hoy</small>
-                            </div>
-                            
-                            <div class="form-group">
-                                <label for="hora-input">Hora</label>
-                                <input type="time" id="hora-input" name="hora" required>
-                            </div>
-                        </div>
-                        
-                        <div class="form-group">
-                            <label for="descripcion-textarea">Descripción</label>
-                            <textarea id="descripcion-textarea" name="descripcion" rows="4" required placeholder="Ingrese una descripción detallada de la audiencia..."></textarea>
-                        </div>
-                        
-                        <div class="form-actions">
-                            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Crear Audiencia</button>
-                            <a href="/abogado/audiencias" class="btn btn-danger"><i class="fas fa-times"></i> Cancelar</a>
-                        </div>
-                    </form>
-                </div>
-            </div>
+      <!-- Sidebar -->
+      <%- include('./partials/sidebar', {currentPath:
+      '/abogado/crearAudiencia'}) %>
+
+      <!-- Main Content -->
+      <div class="main-content">
+        <div class="page-header">
+          <h2 class="page-title">Crear Nueva Audiencia</h2>
         </div>
+
+        <div class="alert alert-success" id="success-alert">
+          <i class="fas fa-check-circle"></i> Audiencia creada exitosamente.
+          Redirigiendo a la lista de audiencias...
+        </div>
+
+        <div class="alert alert-danger" id="error-alert">
+          <i class="fas fa-exclamation-triangle"></i> Error al crear la
+          audiencia. Por favor, intente nuevamente.
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">
+              <i class="fas fa-calendar-plus"></i> Formulario de Nueva Audiencia
+            </h3>
+          </div>
+          <div class="card-body">
+            <form id="audienciaForm" class="audiencia-form">
+              <div class="form-group">
+                <label for="caso-select"
+                  >Seleccionar Caso (Estado: Aceptado)</label
+                >
+                <select id="caso-select" name="casoId" required>
+                  <option value="" disabled selected>Cargando casos...</option>
+                </select>
+                <small class="form-text text-muted"
+                  >Solo se muestran casos en estado 'aceptado'</small
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="sala-select">Seleccionar Sala (Disponible)</label>
+                <select id="sala-select" name="salaId" required>
+                  <option value="" disabled selected>Cargando salas...</option>
+                </select>
+                <small class="form-text text-muted"
+                  >Solo se muestran salas con disponibilidad</small
+                >
+              </div>
+
+              <div class="form-group">
+                <label for="tipo-select">Tipo de Audiencia</label>
+                <select id="tipo-select" name="tipo" required>
+                  <option value="" disabled selected>Seleccione un tipo</option>
+                  <option value="inicial">Inicial</option>
+                  <option value="seguimiento">Seguimiento</option>
+                  <option value="presentacion_pruebas">
+                    Presentación de Pruebas
+                  </option>
+                  <option value="testimonio">Testimonio</option>
+                  <option value="alegatos">Alegatos</option>
+                  <option value="sentencia">Sentencia</option>
+                  <option value="otro">Otro</option>
+                </select>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="fecha-input">Fecha</label>
+                  <input type="date" id="fecha-input" name="fecha" required />
+                  <small class="form-text text-muted">Fecha mínima: hoy</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="hora-input">Hora</label>
+                  <input type="time" id="hora-input" name="hora" required />
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="descripcion-textarea">Descripción</label>
+                <textarea
+                  id="descripcion-textarea"
+                  name="descripcion"
+                  rows="4"
+                  required
+                  placeholder="Ingrese una descripción detallada de la audiencia..."
+                ></textarea>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                  <i class="fas fa-save"></i> Crear Audiencia
+                </button>
+                <a href="/abogado/audiencias" class="btn btn-danger"
+                  ><i class="fas fa-times"></i> Cancelar</a
+                >
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
-    
+
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Obtener elementos del DOM
-            const audienciaForm = document.getElementById('audienciaForm');
-            const casoSelect = document.getElementById('caso-select');
-            const salaSelect = document.getElementById('sala-select');
-            const successAlert = document.getElementById('success-alert');
-            const errorAlert = document.getElementById('error-alert');
-            const logoutBtn = document.getElementById('logoutBtn');
-            
-            // Cargar casos aceptados
-            fetch('/abogado/api/casos-aceptados', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
+      document.addEventListener("DOMContentLoaded", function () {
+        // Obtener elementos del DOM
+        const audienciaForm = document.getElementById("audienciaForm");
+        const casoSelect = document.getElementById("caso-select");
+        const salaSelect = document.getElementById("sala-select");
+        const successAlert = document.getElementById("success-alert");
+        const errorAlert = document.getElementById("error-alert");
+        const logoutBtn = document.getElementById("logoutBtn");
+
+        // Cargar casos aceptados
+        fetch("/abogado/api/casos-aceptados", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            casoSelect.innerHTML =
+              '<option value="" disabled selected>Seleccione un caso</option>';
+
+            if (data.casos && data.casos.length > 0) {
+              data.casos.forEach((caso) => {
+                const option = document.createElement("option");
+                option.value = caso._id;
+                option.textContent = `${caso.numeroExpediente} - ${caso.titulo} (${caso.clienteId.nombre} ${caso.clienteId.apellido})`;
+                casoSelect.appendChild(option);
+              });
+            } else {
+              const option = document.createElement("option");
+              option.disabled = true;
+              option.textContent = "No hay casos aceptados disponibles";
+              casoSelect.appendChild(option);
+            }
+          })
+          .catch((error) => {
+            console.error("Error al cargar casos:", error);
+            casoSelect.innerHTML =
+              '<option value="" disabled selected>Error al cargar casos</option>';
+          });
+        // Cargar salas disponibles
+        fetch("/abogado/api/salas-disponibles", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        })
+          .then((response) => {
+            console.log("Response status:", response.status);
+            return response.json();
+          })
+          .then((data) => {
+            console.log("Salas recibidas:", data);
+            salaSelect.innerHTML =
+              '<option value="" disabled selected>Seleccione una sala</option>';
+
+            if (data.salas && data.salas.length > 0) {
+              data.salas.forEach((sala) => {
+                const option = document.createElement("option");
+                option.value = sala._id;
+                option.textContent = sala.nombre;
+                salaSelect.appendChild(option);
+              });
+            } else {
+              const option = document.createElement("option");
+              option.disabled = true;
+              option.textContent = "No hay salas disponibles";
+              salaSelect.appendChild(option);
+            }
+          })
+          .catch((error) => {
+            console.error("Error al cargar salas:", error);
+            salaSelect.innerHTML =
+              '<option value="" disabled selected>Error al cargar salas</option>';
+          });
+
+        // Establecer fecha mínima como hoy
+        const fechaInput = document.getElementById("fecha-input");
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, "0");
+        const dd = String(today.getDate()).padStart(2, "0");
+        const formattedToday = `${yyyy}-${mm}-${dd}`;
+        fechaInput.setAttribute("min", formattedToday);
+        fechaInput.value = formattedToday;
+
+        // Manejar envío del formulario
+        audienciaForm.addEventListener("submit", function (e) {
+          e.preventDefault();
+
+          const formData = {
+            casoId: casoSelect.value,
+            salaId: salaSelect.value,
+            tipo: document.getElementById("tipo-select").value,
+            descripcion: document.getElementById("descripcion-textarea").value,
+            fecha: document.getElementById("fecha-input").value,
+            hora: document.getElementById("hora-input").value,
+          };
+          console.log("Enviando datos:", formData);
+          fetch("/abogado/api/audiencias", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include",
+            body: JSON.stringify(formData),
+          })
+            .then((response) => response.json())
+            .then((data) => {
+              if (data.message === "Audiencia creada exitosamente") {
+                successAlert.style.display = "block";
+                errorAlert.style.display = "none";
+                audienciaForm.reset();
+
+                // Redireccionar después de 2 segundos
+                setTimeout(() => {
+                  window.location.href = "/abogado/audiencias";
+                }, 2000);
+              } else {
+                throw new Error(data.message || "Error al crear audiencia");
+              }
             })
-            .then(response => response.json())
-            .then(data => {
-                casoSelect.innerHTML = '<option value="" disabled selected>Seleccione un caso</option>';
-                
-                if (data.casos && data.casos.length > 0) {
-                    data.casos.forEach(caso => {
-                        const option = document.createElement('option');
-                        option.value = caso._id;
-                        option.textContent = `${caso.numeroExpediente} - ${caso.titulo} (${caso.clienteId.nombre} ${caso.clienteId.apellido})`;
-                        casoSelect.appendChild(option);
-                    });
-                } else {
-                    const option = document.createElement('option');
-                    option.disabled = true;
-                    option.textContent = 'No hay casos aceptados disponibles';
-                    casoSelect.appendChild(option);
-                }
-            })
-            .catch(error => {
-                console.error('Error al cargar casos:', error);
-                casoSelect.innerHTML = '<option value="" disabled selected>Error al cargar casos</option>';
+            .catch((error) => {
+              console.error("Error:", error);
+              errorAlert.textContent =
+                error.message || "Error al crear audiencia";
+              errorAlert.style.display = "block";
+              successAlert.style.display = "none";
             });
-            
-            // Cargar salas disponibles
-            fetch('/abogado/api/salas-disponibles', {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                salaSelect.innerHTML = '<option value="" disabled selected>Seleccione una sala</option>';
-                
-                if (data.salas && data.salas.length > 0) {
-                    data.salas.forEach(sala => {
-                        const option = document.createElement('option');
-                        option.value = sala._id;
-                        option.textContent = `Sala ${sala.numero_de_sala} - Capacidad: ${sala.capacidad} personas`;
-                        salaSelect.appendChild(option);
-                    });
-                } else {
-                    const option = document.createElement('option');
-                    option.disabled = true;
-                    option.textContent = 'No hay salas disponibles';
-                    salaSelect.appendChild(option);
-                }
-            })
-            .catch(error => {
-                console.error('Error al cargar salas:', error);
-                salaSelect.innerHTML = '<option value="" disabled selected>Error al cargar salas</option>';
-            });
-            
-            // Establecer fecha mínima como hoy
-            const fechaInput = document.getElementById('fecha-input');
-            const today = new Date();
-            const yyyy = today.getFullYear();
-            const mm = String(today.getMonth() + 1).padStart(2, '0');
-            const dd = String(today.getDate()).padStart(2, '0');
-            const formattedToday = `${yyyy}-${mm}-${dd}`;
-            fechaInput.setAttribute('min', formattedToday);
-            fechaInput.value = formattedToday;
-            
-            // Manejar envío del formulario
-            audienciaForm.addEventListener('submit', function(e) {
-                e.preventDefault();
-                
-                const formData = {
-                    casoId: casoSelect.value,
-                    salaId: salaSelect.value,
-                    tipo: document.getElementById('tipo-select').value,
-                    descripcion: document.getElementById('descripcion-textarea').value,
-                    fecha: document.getElementById('fecha-input').value,
-                    hora: document.getElementById('hora-input').value
-                };
-                
-                fetch('/abogado/api/audiencias', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
-                    },
-                    body: JSON.stringify(formData)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.message === 'Audiencia creada exitosamente') {
-                        successAlert.style.display = 'block';
-                        errorAlert.style.display = 'none';
-                        audienciaForm.reset();
-                        
-                        // Redireccionar después de 2 segundos
-                        setTimeout(() => {
-                            window.location.href = '/abogado/audiencias';
-                        }, 2000);
-                    } else {
-                        throw new Error(data.message || 'Error al crear audiencia');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    errorAlert.textContent = error.message || 'Error al crear audiencia';
-                    errorAlert.style.display = 'block';
-                    successAlert.style.display = 'none';
-                });
-            });
-            
         });
+      });
     </script>
-    
+
     <!-- Scripts comunes -->
     <%- include('../partials/scripts') %>
-</body>
+  </body>
 </html>
