@@ -13,17 +13,10 @@ const { validationResult } = require("express-validator");
 exports.renderDashboard = async (req, res) => {
   try {
     const abogadoId = req.user.id;
-
-    // Obtener casos asignados al abogado y casos disponibles (sin abogado asignado)
-    const casos = await Caso.find({
-      $or: [
-        { abogadoId }, // Casos asignados a este abogado
-        { abogadoId: { $exists: false } }, // Casos sin abogado asignado
-        { abogadoId: null }, // Casos con abogadoId explícitamente null
-      ],
-    })
+    // Obtener casos asignados al abogado
+    const casos = await Caso.find({ abogadoId })
       .sort({ fechaRegistro: -1 })
-      .limit(10) // Aumentamos el límite para mostrar más casos
+      .limit(5)
       .populate("clienteId", "nombre apellido email")
       .lean();
 
@@ -183,40 +176,10 @@ exports.renderDashboard = async (req, res) => {
  */
 exports.renderCasos = async (req, res) => {
   try {
-    const abogadoId = req.user.id;
-
-    // Obtener estadísticas de casos
-    const estadisticas = await Promise.all([
-      Caso.countDocuments({ abogadoId }), // Total de casos asignados
-      Caso.countDocuments({
-        $or: [
-          { abogadoId },
-          { abogadoId: { $exists: false } },
-          { abogadoId: null },
-        ],
-      }), // Total de casos disponibles
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "pendiente" }],
-      }), // Casos pendientes
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "en_proceso" }],
-      }), // Casos en proceso
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "finalizado" }],
-      }), // Casos finalizados
-    ]);
-
     res.render("abogado/casos", {
       user: req.user,
       title: "Mis Casos",
       currentPath: "/abogado/casos",
-      estadisticas: {
-        totalAsignados: estadisticas[0],
-        totalDisponibles: estadisticas[1],
-        pendientes: estadisticas[2],
-        enProceso: estadisticas[3],
-        finalizados: estadisticas[4],
-      },
     });
   } catch (error) {
     console.error("Error al renderizar casos:", error);
@@ -234,40 +197,10 @@ exports.renderCasos = async (req, res) => {
  */
 exports.renderAudiencias = async (req, res) => {
   try {
-    const abogadoId = req.user.id;
-
-    // Obtener estadísticas de audiencias
-    const estadisticas = await Promise.all([
-      Audiencia.countDocuments({ abogadoId }), // Total de audiencias
-      Audiencia.countDocuments({
-        abogadoId,
-        estado: "pendiente",
-      }), // Audiencias pendientes
-      Audiencia.countDocuments({
-        abogadoId,
-        estado: "en_proceso",
-      }), // Audiencias en proceso
-      Audiencia.countDocuments({
-        abogadoId,
-        estado: "finalizado",
-      }), // Audiencias finalizadas
-      Audiencia.countDocuments({
-        abogadoId,
-        fecha: { $gte: new Date() },
-      }), // Audiencias futuras
-    ]);
-
     res.render("abogado/audiencias", {
       user: req.user,
       title: "Mis Audiencias",
       currentPath: "/abogado/audiencias",
-      estadisticas: {
-        total: estadisticas[0],
-        pendientes: estadisticas[1],
-        enProceso: estadisticas[2],
-        finalizadas: estadisticas[3],
-        futuras: estadisticas[4],
-      },
     });
   } catch (error) {
     console.error("Error al renderizar audiencias:", error);
@@ -800,19 +733,14 @@ exports.obtenerAbogadoPorId = async (req, res) => {
  */
 exports.obtenerCasosConPaginacion = async (req, res) => {
   try {
-    // Verificar si hay token y usuario
-    console.log("Token recibido:", req.headers.authorization);
-    console.log("Usuario:", req.user);
-
+    const abogadoId = req.user.id;
     const { estado, pagina = 1, limite = 10 } = req.query;
 
-    // Construir filtro sin abogadoId para mostrar todos los casos
-    const filtro = {};
+    // Construir filtro
+    const filtro = { abogadoId };
     if (estado && estado !== "todos") {
       filtro.estado = estado;
     }
-
-    console.log("Filtro construido:", filtro);
 
     // Calcular skip para paginación
     const skip = (parseInt(pagina) - 1) * parseInt(limite);
@@ -987,6 +915,7 @@ exports.renderCrearAudiencia = async (req, res) => {
  */
 exports.obtenerSalasDisponibles = async (req, res) => {
   try {
+
     const { fecha, hora } = req.query;
 
     if (!fecha || !hora) {
@@ -1018,6 +947,68 @@ exports.obtenerSalasDisponibles = async (req, res) => {
     );
 
     res.status(200).json(salasDisponibles);
+
+    // Obtener todas las salas disponibles inicialmente
+    const salas = await Sala.find({
+      estado: { $ne: "mantenimiento" }, // Excluir salas en mantenimiento si aplica
+    }).lean();
+
+    // Registrar para debugging
+    console.log("Total de salas encontradas:", salas.length);
+
+    if (!salas || salas.length === 0) {
+      return res.status(200).json({
+        message: "No hay salas registradas en el sistema",
+        salas: [],
+      });
+    }
+
+    // Si se proporcionan fecha y hora, filtrar por disponibilidad
+    if (req.query.fecha && req.query.hora) {
+      const fechaAudiencia = new Date(req.query.fecha);
+      const [horaInicio, minutosInicio] = req.query.hora.split(":").map(Number);
+      fechaAudiencia.setHours(horaInicio, minutosInicio, 0, 0);
+
+      // Calcular hora de fin (asumiendo 1 hora de duración)
+      const fechaFin = new Date(fechaAudiencia);
+      fechaFin.setHours(fechaAudiencia.getHours() + 1);
+
+      // Buscar audiencias que se solapan con ese horario
+      const audienciasExistentes = await Audiencia.find({
+        fecha: fechaAudiencia,
+        $or: [
+          { hora_inicio: req.query.hora },
+          {
+            hora_inicio: {
+              $gte: req.query.hora,
+              $lt: `${fechaFin.getHours()}:${fechaFin.getMinutes()}`,
+            },
+          },
+        ],
+      }).select("salaId");
+
+      // Filtrar salas ocupadas
+      const salasOcupadas = audienciasExistentes.map((a) =>
+        a.salaId.toString()
+      );
+      salas = salas.filter(
+        (sala) => !salasOcupadas.includes(sala._id.toString())
+      );
+    }
+
+    // Formatear respuesta
+    const salasFormateadas = salas.map((sala) => ({
+      _id: sala._id,
+      numero: sala.numero_de_sala,
+      capacidad: sala.capacidad,
+      ubicacion: sala.ubicacion || "No especificada",
+      nombre: `Sala ${sala.numero_de_sala} - Capacidad: ${sala.capacidad} personas`,
+    }));
+
+    res.status(200).json({
+      message: "Salas obtenidas correctamente",
+      salas: salasFormateadas,
+    });
   } catch (error) {
     console.error("Error al obtener salas disponibles:", error);
     res.status(500).json({
@@ -1028,7 +1019,7 @@ exports.obtenerSalasDisponibles = async (req, res) => {
 };
 
 /**
- * Obtiene los casos aceptados por el abogado
+ * Obtiene los casos aceptados para crear audiencias
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
@@ -1036,20 +1027,19 @@ exports.obtenerCasosAceptados = async (req, res) => {
   try {
     const abogadoId = req.user.id;
 
-    // Obtener casos en estado aceptado o iniciado
     const casos = await Caso.find({
       abogadoId,
-      estado: { $in: ["aceptado", "iniciado"] },
+      estado: "aceptado",
     })
-      .select("_id titulo numeroExpediente clienteId")
+      .sort({ fechaRegistro: -1 })
       .populate("clienteId", "nombre apellido")
-      .lean();
+      .select("numeroExpediente titulo tipo clienteId");
 
-    res.status(200).json(casos);
+    res.status(200).json({ casos });
   } catch (error) {
     console.error("Error al obtener casos aceptados:", error);
     res.status(500).json({
-      message: "Error al obtener los casos aceptados",
+      message: "Error al obtener casos aceptados",
       error: error.message,
     });
   }
@@ -1062,51 +1052,189 @@ exports.obtenerCasosAceptados = async (req, res) => {
  */
 exports.crearAudiencia = async (req, res) => {
   try {
-    const { casoId, fecha, hora, salaId, descripcion } = req.body;
+    const { casoId, fecha, hora, salaId, tipo, descripcion } = req.body;
     const abogadoId = req.user.id;
+    console.log("Iniciando creación de audiencia:", {
+      casoId,
+      fecha,
+      hora,
+      salaId,
+      tipo,
+      descripcion,
+      abogadoId,
+    });
 
-    // Validar datos requeridos
-    if (!casoId || !fecha || !hora || !salaId) {
+    // Validar formato de los datos
+    if (!mongoose.Types.ObjectId.isValid(casoId)) {
+      return res.status(400).json({ message: "ID de caso inválido" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(salaId)) {
+      return res.status(400).json({ message: "ID de sala inválido" });
+    }
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(fecha)) {
       return res
         .status(400)
-        .json({ message: "Todos los campos son obligatorios" });
+        .json({ message: "Formato de fecha inválido. Use YYYY-MM-DD" });
     }
-
-    // Verificar que el caso exista y pertenezca al abogado
-    const caso = await Caso.findOne({ _id: casoId, abogadoId });
-    if (!caso) {
+    if (!/^\d{2}:\d{2}$/.test(hora)) {
       return res
-        .status(404)
-        .json({ message: "Caso no encontrado o no asignado a este abogado" });
+        .status(400)
+        .json({ message: "Formato de hora inválido. Use HH:mm" });
     }
 
-    // Verificar que la sala exista
-    const sala = await Sala.findById(salaId);
+    // Validar datos requeridos
+    const camposFaltantes = [];
+    if (!casoId) camposFaltantes.push("caso");
+    if (!fecha) camposFaltantes.push("fecha");
+    if (!hora) camposFaltantes.push("hora");
+    if (!salaId) camposFaltantes.push("sala");
+    if (!tipo) camposFaltantes.push("tipo");
+
+    if (camposFaltantes.length > 0) {
+      console.log("Validación fallida - campos faltantes:", camposFaltantes);
+      return res.status(400).json({
+        message: `Los siguientes campos son obligatorios: ${camposFaltantes.join(
+          ", "
+        )}`,
+        received: { casoId, fecha, hora, salaId, tipo },
+      });
+    } // Verificar que el caso exista, pertenezca al abogado y esté en estado aceptado
+    const caso = await Caso.findOne({
+      _id: casoId,
+      abogadoId,
+      estado: "aceptado",
+    });
+
+    if (!caso) {
+      console.error("Caso no válido:", { casoId, abogadoId });
+      return res.status(404).json({
+        message:
+          "El caso debe existir, estar asignado al abogado y en estado 'aceptado'",
+      });
+    }
+
+    // Verificar que la sala exista y esté disponible
+    const sala = await Sala.findOne({
+      _id: salaId,
+      estado: { $ne: "mantenimiento" },
+    });
+
     if (!sala) {
-      return res.status(404).json({ message: "Sala no encontrada" });
+      console.error("Sala no válida:", { salaId });
+      return res.status(404).json({
+        message: "La sala debe existir y estar disponible para su uso",
+      });
+    } // Parsear y validar fecha y hora
+    let fechaAudiencia;
+    try {
+      const [horas, minutos] = hora.split(":").map(Number);
+
+      // Validar que la hora esté dentro del rango permitido (8:00 - 18:00)
+      if (horas < 8 || horas >= 18) {
+        console.error("Hora fuera de rango:", hora);
+        return res.status(400).json({
+          message:
+            "Las audiencias solo pueden programarse entre las 8:00 y las 18:00",
+        });
+      }
+
+      // Crear objeto Date con la fecha y hora
+      fechaAudiencia = new Date(fecha);
+      fechaAudiencia.setHours(horas, minutos, 0, 0);
+
+      // Validar que la fecha y hora sean válidas
+      if (isNaN(fechaAudiencia.getTime())) {
+        console.error("Fecha/hora inválida:", { fecha, hora });
+        return res.status(400).json({
+          message: "La fecha u hora proporcionada no es válida",
+        });
+      }
+    } catch (error) {
+      console.error("Error al parsear fecha/hora:", error);
+      return res.status(400).json({
+        message: "Error al procesar la fecha u hora",
+      });
     }
 
-    // Convertir a fecha y hora
-    const fechaAudiencia = new Date(fecha);
-    const [horaInicio, minutosInicio] = hora.split(":").map(Number);
-    fechaAudiencia.setHours(horaInicio, minutosInicio, 0, 0);
+    // Validar que la fecha no sea anterior al día actual
+    const ahora = new Date();
+    if (fechaAudiencia < new Date(ahora.setHours(0, 0, 0, 0))) {
+      console.error("Fecha en el pasado:", fechaAudiencia);
+      return res.status(400).json({
+        message: "No se pueden programar audiencias en fechas pasadas",
+      });
+    } // Verificar que no exista otra audiencia en la misma sala y hora
+    const fechaInicio = new Date(fechaAudiencia);
+    fechaInicio.setHours(0, 0, 0, 0);
 
-    // Crear la audiencia
+    const fechaFin = new Date(fechaAudiencia);
+    fechaFin.setHours(23, 59, 59, 999);
+
+    const audienciaExistente = await Audiencia.findOne({
+      salaId,
+      fecha: {
+        $gte: fechaInicio,
+        $lt: fechaFin,
+      },
+      hora: hora,
+      estado: { $nin: ["cancelada", "completada"] },
+    });
+
+    if (audienciaExistente) {
+      return res.status(400).json({
+        message:
+          "Ya existe una audiencia programada en esta sala para la fecha y hora seleccionada",
+      });
+    } // Crear la audiencia con todos los campos requeridos
     const nuevaAudiencia = new Audiencia({
       casoId,
       abogadoId,
-      juezId: caso.juezId,
-      clienteId: caso.clienteId,
-      fecha: fechaAudiencia,
+      tipo,
       salaId,
-      descripcion: descripcion || `Audiencia para caso ${caso.titulo}`,
-      estado: "programada",
+      fecha: fechaAudiencia,
+      hora,
+      descripcion:
+        descripcion || `Audiencia ${tipo} para caso ${caso.numeroExpediente}`,
+      estado: "abierta",
+      resultado: "pendiente",
     });
 
-    await nuevaAudiencia.save();
+    // Validar el documento antes de guardar
+    try {
+      const validationError = nuevaAudiencia.validateSync();
+      if (validationError) {
+        console.error("Error de validación:", validationError);
+        return res.status(400).json({
+          message: "Error de validación en los datos de la audiencia",
+          errors: Object.values(validationError.errors).map(
+            (err) => err.message
+          ),
+        });
+      }
+
+      // Intentar guardar la audiencia
+      await nuevaAudiencia.save();
+      console.log("Audiencia guardada exitosamente:", {
+        id: nuevaAudiencia._id,
+        caso: nuevaAudiencia.casoId,
+        fecha: nuevaAudiencia.fecha,
+        hora: nuevaAudiencia.hora,
+      });
+    } catch (error) {
+      console.error("Error al guardar la audiencia:", error);
+      return res.status(500).json({
+        message: "Error al guardar la audiencia en la base de datos",
+        error: error.message,
+      });
+    }
+
+    // Actualizar el caso con la referencia a la audiencia
+    caso.audiencias = caso.audiencias || [];
+    caso.audiencias.push(nuevaAudiencia._id);
+    await caso.save();
 
     res.status(201).json({
-      message: "Audiencia creada correctamente",
+      message: "Audiencia creada exitosamente",
       audiencia: nuevaAudiencia,
     });
   } catch (error) {
@@ -1114,6 +1242,8 @@ exports.crearAudiencia = async (req, res) => {
     res.status(500).json({
       message: "Error al crear la audiencia",
       error: error.message,
+
+      details: error.stack,
     });
   }
 };
@@ -1277,35 +1407,10 @@ exports.obtenerAudiencias = async (req, res) => {
 exports.renderCasos = async (req, res) => {
   try {
     const abogadoId = req.user.id;
-
-    // Obtener estadísticas de casos
-    const estadisticas = await Promise.all([
-      Caso.countDocuments({ abogadoId }), // Casos asignados
-      Caso.countDocuments({
-        $or: [{ abogadoId: { $exists: false } }, { abogadoId: null }],
-      }), // Casos disponibles
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "pendiente" }],
-      }), // Casos pendientes
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "en_proceso" }],
-      }), // Casos en proceso
-      Caso.countDocuments({
-        $and: [{ abogadoId }, { estado: "finalizado" }],
-      }), // Casos finalizados
-    ]);
-
     res.render("abogado/casos", {
       user: req.user,
       title: "Mis Casos",
       currentPath: "/abogado/casos",
-      estadisticas: {
-        totalAsignados: estadisticas[0],
-        totalDisponibles: estadisticas[1],
-        pendientes: estadisticas[2],
-        enProceso: estadisticas[3],
-        finalizados: estadisticas[4],
-      },
     });
   } catch (error) {
     console.error("Error al renderizar casos:", error);
@@ -1382,10 +1487,12 @@ exports.renderDetalleCaso = async (req, res) => {
  */
 exports.obtenerCasosConPaginacion = async (req, res) => {
   try {
+
+    const abogadoId = req.user.id;
     const { estado, pagina = 1, limite = 10 } = req.query;
 
-    // Construir filtro sin abogadoId para mostrar todos los casos
-    const filtro = {};
+    // Construir filtro
+    const filtro = { abogadoId };
     if (estado && estado !== "todos") {
       filtro.estado = estado;
     }
@@ -1429,7 +1536,9 @@ exports.obtenerCasosConPaginacion = async (req, res) => {
  */
 exports.obtenerCasosAbogado = async (req, res) => {
   try {
-    const casos = await Caso.find()
+    const abogadoId = req.user.id;
+
+    const casos = await Caso.find({ abogadoId })
       .sort({ fechaRegistro: -1 })
       .populate("clienteId", "nombre apellido email")
       .lean();
@@ -1471,6 +1580,7 @@ exports.renderMisDatos = async (req, res) => {
  * @param {Object} res - Objeto de respuesta HTTP
  */
 exports.actualizarDatosAbogado = async (req, res) => {
+
   try {
     const abogadoId = req.user.id;
     const { especialidad, colegiatura, telefono, direccion } = req.body;
@@ -1531,26 +1641,18 @@ exports.actualizarDatosAbogado = async (req, res) => {
 };
 
 /**
- * Obtiene las audiencias del abogado con paginación para la API
+ * Obtiene los datos de un abogado por ID
  * @param {Object} req - Objeto de solicitud HTTP
  * @param {Object} res - Objeto de respuesta HTTP
  */
+
 exports.obtenerAudiencias = async (req, res) => {
   try {
+    const abogadoId = req.user.id;
     const { estado, tipo, desde, hasta, pagina = 1, limite = 10 } = req.query;
 
-    // Obtener casos del abogado y casos disponibles
-    const casos = await Caso.find().lean();
-
-    // Obtener IDs de los casos
-    const casoIds = casos.map((caso) => caso._id);
-
-    // Construir filtro para las audiencias
-    const filtro = {
-      casoId: { $in: casoIds },
-    };
-
-    // Agregar filtros adicionales si se especifican
+    // Construir filtro
+    const filtro = { abogadoId };
     if (estado && estado !== "todos") {
       filtro.estado = estado;
     }
@@ -1621,139 +1723,4 @@ exports.obtenerAudiencias = async (req, res) => {
       error: error.message,
     });
   }
-};
-
-/**
- * Endpoint para obtener los detalles de un caso específico
- */
-exports.obtenerDetalleCaso = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const caso = await Caso.findById(id).populate("clienteId", "nombre apellido email").lean();
-    if (!caso) {
-      return res.status(404).json({ message: "Caso no encontrado" });
-    }
-    res.status(200).json(caso);
-  } catch (error) {
-    console.error("Error al obtener los detalles del caso:", error);
-    res.status(500).json({ message: "Error al obtener los detalles del caso", error: error.message });
-  }
-};
-
-/**
- * Actualiza los datos profesionales del abogado
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.actualizarDatosAbogado = async (req, res) => {
-    try {
-      const abogadoId = req.user.id;
-      const { especialidad, colegiatura, telefono, direccion } = req.body;
-  
-      // Validar datos
-      if (!especialidad || !especialidad.trim()) {
-        return res.status(400).json({ message: "La especialidad es requerida" });
-      }
-  
-      if (!colegiatura || !colegiatura.trim() || !/^\d{10}$/.test(colegiatura)) {
-        return res.status(400).json({
-          message: "El número de colegiatura debe tener 10 dígitos numéricos",
-        });
-      }
-  
-      // Actualizar datos del abogado
-      const datosActualizados = {
-        especialidad: especialidad.trim(),
-        colegiatura: colegiatura.trim(),
-        estado: "activo", // Asegurar que el estado se mantenga como activo
-      };
-  
-      // Agregar campos opcionales si están presentes
-      if (telefono) datosActualizados.telefono = telefono.trim();
-      if (direccion) datosActualizados.direccion = direccion.trim();
-  
-      // Actualizar en la base de datos
-      const abogadoActualizado = await User.findByIdAndUpdate(
-        abogadoId,
-        datosActualizados,
-        { new: true, runValidators: true }
-      );
-  
-      if (!abogadoActualizado) {
-        return res.status(404).json({ message: "Abogado no encontrado" });
-      }
-  
-      res.status(200).json({
-        message: "Datos actualizados correctamente",
-        abogado: {
-          nombre: abogadoActualizado.nombre,
-          apellido: abogadoActualizado.apellido,
-          email: abogadoActualizado.email,
-          especialidad: abogadoActualizado.especialidad,
-          colegiatura: abogadoActualizado.colegiatura,
-          telefono: abogadoActualizado.telefono,
-          direccion: abogadoActualizado.direccion,
-          estado: abogadoActualizado.estado,
-        },
-      });
-    } catch (error) {
-      console.error("Error al actualizar datos del abogado:", error);
-      res.status(500).json({
-        message: "Error al actualizar los datos",
-        error: error.message,
-      });
-    }
-};
-
-exports.renderMisDatos = async (req, res) => {
-    try {
-      // Obtener datos completos del abogado desde la base de datos
-      const abogado = await User.findById(req.user.id);
-  
-      if (!abogado) {
-        return res.status(404).render("error", {
-          message: "Usuario no encontrado",
-          error: {},
-        });
-      }
-  
-      res.render("abogado/mis-datos", {
-        user: abogado,
-        title: "Mis Datos Profesionales",
-        currentPath: "/abogado/mis-datos",
-      });
-    } catch (error) {
-      console.error("Error al renderizar mis datos:", error);
-      res.status(500).render("error", {
-        message: "Error al cargar la página de datos profesionales",
-        error: process.env.NODE_ENV === "development" ? error : {},
-      });
-    }
-};
-
-/**
- * Obtiene los datos de un abogado por ID
- * @param {Object} req - Objeto de solicitud HTTP
- * @param {Object} res - Objeto de respuesta HTTP
- */
-exports.obtenerDatosAbogado = async (req, res) => {
-    const { id } = req.params;
-
-    // Validación de formato del ID
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: 'ID de abogado no válido' });
-    }
-
-    try {
-        const abogado = await User.findById(id).select('nombre apellido email telefono especialidad colegiatura');
-
-        if (!abogado) {
-            return res.status(404).json({ message: 'Abogado no encontrado' });
-        }
-
-        res.status(200).json({ abogado });
-    } catch (error) {
-        console.error('[obtenerDatosAbogado] Error:', error);
-        res.status(500).json({ message: 'Error interno del servidor al obtener los datos del abogado' });
-    }
 };
