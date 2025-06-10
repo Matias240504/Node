@@ -105,6 +105,39 @@ function initChat() {
     }
   });
 
+  // Manejar mensajes en streaming del asistente
+  socket.on("assistant-stream", (data) => {
+    const { username, message, isComplete } = data;
+    const chatMessages = document.getElementById("chat-messages");
+    const typingIndicator = document.getElementById("typing-indicator");
+    
+    // Buscar o crear el elemento del mensaje del asistente
+    let messageElement = chatMessages.querySelector('.message.assistant-streaming');
+    
+    if (!messageElement) {
+      messageElement = document.createElement("div");
+      messageElement.className = "message other assistant-streaming";
+      messageElement.innerHTML = `
+        <div class="message-sender">${username}</div>
+        <div class="message-content"></div>
+      `;
+      chatMessages.appendChild(messageElement);
+    }
+    
+    // Actualizar el contenido
+    const contentDiv = messageElement.querySelector('.message-content');
+    contentDiv.textContent = message;
+    
+    // Scroll al fondo
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Si es el mensaje completo, quitar la clase de streaming
+    if (isComplete) {
+      messageElement.classList.remove('assistant-streaming');
+      typingIndicator.textContent = "";
+    }
+  });
+
   // Configurar eventos para el botón de enviar y el input
   const chatInput = document.getElementById("chat-input");
   const sendButton = document.getElementById("send-button");

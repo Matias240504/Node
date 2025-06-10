@@ -5,10 +5,9 @@ const ollamaService = new OllamaService();
 
 module.exports = (io) => {
   io.on("connection", async (socket) => {
-    console.log("Nuevo cliente conectado XDXDXDX");
+    console.log("Nuevo cliente conectado");
 
     try {
-      // Enviar mensajes guardados al cliente nuevo
       const messages = await messageService.getAllMessages();
       socket.emit("all-messages", messages);
     } catch (error) {
@@ -25,49 +24,50 @@ module.exports = (io) => {
           username,
           message,
         });
-        console.log("Mensaje de usuario guardado:", savedUserMessage);
         io.emit("new-message", savedUserMessage);
 
         // Indicar que el bot está escribiendo
         io.emit("writing", "Asistente");
 
-        // Obtener y procesar respuesta del bot
-        console.log("Solicitando respuesta a Ollama...");
-        const botReply = await ollamaService.getResponseFromOllama(message);
-        console.log("Respuesta de Ollama recibida:", botReply);
+        // Iniciar respuesta streaming
+        let fullResponse = "";
+        let lastEmit = Date.now();
+        const EMIT_INTERVAL = 100; // Emitir cada 100ms
 
-        if (botReply && botReply.trim()) {
-          // Pequeña pausa para simular el tiempo de escritura
-          await new Promise((resolve) => setTimeout(resolve, 1000));
+        for await (const chunk of ollamaService.streamResponseFromOllama(message)) {
+          fullResponse += chunk;
 
-          // Guardar y emitir respuesta del bot
-          const savedBotMessage = await messageService.createMessage({
-            username: "Asistente",
-            message: botReply.trim(),
-          });
-          console.log("Mensaje del bot guardado:", savedBotMessage);
-          io.emit("new-message", savedBotMessage);
-        } else {
-          // Enviar mensaje de error si la respuesta está vacía
-          const errorMessage = await messageService.createMessage({
-            username: "Asistente",
-            message:
-              "Lo siento, no pude generar una respuesta en este momento.",
-          });
-          io.emit("new-message", errorMessage);
+          // Emitir chunks periódicamente para una experiencia fluida
+          const now = Date.now();
+          if (now - lastEmit >= EMIT_INTERVAL) {
+            io.emit("assistant-stream", {
+              username: "Asistente",
+              message: fullResponse.trim(),
+              isComplete: false,
+            });
+            lastEmit = now;
+          }
         }
+
+        // Guardar y emitir mensaje completo
+        const savedBotMessage = await messageService.createMessage({
+          username: "Asistente",
+          message: fullResponse.trim(),
+        });
+
+        io.emit("assistant-stream", {
+          username: "Asistente",
+          message: fullResponse.trim(),
+          isComplete: true,
+        });
       } catch (error) {
         console.error("Error en el manejo del mensaje:", error);
-
-        // Enviar mensaje de error al chat
         const errorMessage = await messageService.createMessage({
           username: "Asistente",
           message:
             "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta de nuevo.",
         });
         io.emit("new-message", errorMessage);
-
-        // Emitir evento de error para manejo adicional si es necesario
         socket.emit("error", {
           message: "Error al procesar el mensaje",
           details: error.message,

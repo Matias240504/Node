@@ -57,6 +57,60 @@ class OllamaService {
       return "Lo siento, hubo un error al generar la respuesta.";
     }
   }
+
+  async *streamResponseFromOllama(userMessage) {
+    try {
+      const requestBody = {
+        model: this.model,
+        prompt: userMessage,
+        stream: true,
+        temperature: 0.5,
+        max_tokens: 250,
+      };
+
+      const response = await fetch(this.apiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n");
+
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          if (line.trim()) {
+            try {
+              const json = JSON.parse(line);
+              if (json.response) {
+                yield json.response;
+              }
+            } catch (e) {
+              console.error("Error parsing JSON:", e);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error al consultar Ollama:", error);
+      yield "Lo siento, hubo un error al generar la respuesta.";
+    }
+  }
 }
 
 module.exports = OllamaService;
