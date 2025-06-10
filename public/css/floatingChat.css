@@ -151,3 +151,76 @@
   height: 16px;
 }
 
+/* Estilos de Markdown en mensajes */
+.message-content {
+    line-height: 1.5;
+}
+
+.message-content p {
+    margin-bottom: 8px;
+}
+
+.message-content p:last-child {
+    margin-bottom: 0;
+}
+
+.message-content strong {
+    font-weight: 600;
+}
+
+.message-content em {
+    font-style: italic;
+}
+
+.message-content code {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 0.9em;
+}
+
+.message-content pre {
+    background-color: rgba(0, 0, 0, 0.1);
+    padding: 8px;
+    border-radius: 4px;
+    overflow-x: auto;
+    margin: 8px 0;
+}
+
+.message-content blockquote {
+    border-left: 3px solid #ddd;
+    margin: 8px 0;
+    padding-left: 10px;
+    color: #666;
+}
+
+.message-content ul,
+.message-content ol {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.message-content a {
+    color: #4361ee;
+    text-decoration: underline;
+}
+
+/* Ajustes para mensajes del usuario */
+.message.user .message-content code {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.message.user .message-content pre {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message.user .message-content blockquote {
+    border-left-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message.user .message-content a {
+    color: #ffffff;
+}
+

@@ -60,9 +60,20 @@ class OllamaService {
 
   async *streamResponseFromOllama(userMessage) {
     try {
+      // Agregar instrucciones para formato markdown
+      const formattedPrompt = `Por favor, proporciona una respuesta utilizando markdown cuando sea apropiado:
+- Usa **negrita** para enfatizar puntos importantes
+- Usa *cursiva* para términos especiales
+- Usa \`código\` para términos técnicos
+- Usa listas cuando enumeres items
+- Usa > para citas o notas importantes
+- Usa \`\`\` para bloques de código
+
+Aquí está la consulta del usuario: ${userMessage}`;
+
       const requestBody = {
         model: this.model,
-        prompt: userMessage,
+        prompt: formattedPrompt,
         stream: true,
         temperature: 0.5,
         max_tokens: 250,

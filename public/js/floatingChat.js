@@ -3,6 +3,25 @@ let socket;
 let username = "";
 let chatOpen = false;
 
+// Configurar marked para un entorno seguro
+marked.setOptions({
+  gfm: true, // GitHub Flavored Markdown
+  breaks: true, // Convierte los saltos de línea en <br>
+  sanitize: false, // Permite HTML en el markdown
+  smartLists: true,
+  smartypants: true
+});
+
+// Función para procesar markdown de manera segura
+function processMarkdown(text) {
+  try {
+    return marked.parse(text);
+  } catch (e) {
+    console.error('Error al procesar markdown:', e);
+    return text;
+  }
+}
+
 // Función para crear los elementos del chat
 function createChatElements() {
   // Crear el botón flotante
@@ -55,10 +74,14 @@ function initChat() {
 
     for (const message of messages) {
       const messageClass = message.username === username ? "user" : "other";
+      const messageContent = message.username === "Asistente" 
+        ? processMarkdown(message.message)
+        : message.message;
+      
       const formattedMessage = `
         <div class="message ${messageClass}">
           <div class="message-sender">${message.username}</div>
-          <div class="message-content">${message.message}</div>
+          <div class="message-content">${messageContent}</div>
         </div>
       `;
       content += formattedMessage;
@@ -80,9 +103,15 @@ function initChat() {
     const messageClass = message.username === username ? "user" : "other";
     const messageElement = document.createElement("div");
     messageElement.className = `message ${messageClass}`;
+    
+    // Procesar el markdown solo para mensajes del asistente
+    const messageContent = message.username === "Asistente" 
+      ? processMarkdown(message.message)
+      : message.message;
+
     messageElement.innerHTML = `
       <div class="message-sender">${message.username}</div>
-      <div class="message-content">${message.message}</div>
+      <div class="message-content">${messageContent}</div>
     `;
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -126,7 +155,7 @@ function initChat() {
     
     // Actualizar el contenido
     const contentDiv = messageElement.querySelector('.message-content');
-    contentDiv.textContent = message;
+    contentDiv.innerHTML = processMarkdown(message);
     
     // Scroll al fondo
     chatMessages.scrollTop = chatMessages.scrollHeight;
