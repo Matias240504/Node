@@ -1,10 +1,14 @@
-console.log("fetch existe:", typeof fetch);
+require('dotenv').config();
+const jwt = require('jsonwebtoken');
+const User = require('../models/userModel');
+const Caso = require('../models/caso');
 
 class OllamaService {
   constructor() {
     this.apiUrl = "http://localhost:11434/api/generate";
-    this.model = "gemma3"; // Usando el modelo que tenemos instalado
+    this.model = "gemma3";
   }
+
   async getResponseFromOllama(userMessage) {
     try {
       const requestBody = {
@@ -28,6 +32,7 @@ class OllamaService {
         },
         body: JSON.stringify(requestBody),
       });
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(
@@ -44,40 +49,114 @@ class OllamaService {
       const data = await response.json();
       console.log("Respuesta recibida de Ollama:", {
         status: response.status,
-        data: data,
+        data: data
       });
+      
+      return data.response;
+    } catch (error) {
+      console.error("Error al obtener respuesta de Ollama:", error);
+      throw error;
+    }
+  }
 
-      if (!data.response) {
-        throw new Error("Respuesta vacía de Ollama");
+  async handleChatRequest(req) {
+    try {
+      // 1. Verificar y decodificar el token JWT
+      const authHeader = req.headers.authorization;
+      if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        console.log('Token no proporcionado');
+        return req.body.message;
+      }      const token = authHeader.split(' ')[1];      if (!process.env.JWT_SECRET_KEY) {
+        console.error('JWT_SECRET_KEY no está definido en las variables de entorno');
+        return req.body.message;
       }
 
-      return data.response.trim();
+      try {        console.log('Intentando verificar token JWT...');
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        console.log('Token verificado:', decoded);
+        
+        // El id del usuario puede estar en decoded.id o decoded.userId
+        const userId = decoded.id || decoded.userId;
+        if (!userId) {
+          console.error('No se encontró el ID del usuario en el token:', decoded);
+          return req.body.message;
+        }
+        console.log('ID de usuario encontrado:', userId);
+            // 2. Obtener datos del usuario
+      const user = await User.findById(userId)
+        .select('nombre apellido email rol')
+        .lean();
+      
+      console.log('Usuario encontrado:', user ? 'Sí' : 'No');
+
+        if (!user) {
+          console.log('Usuario no encontrado, procesando mensaje sin contexto');
+          return req.body.message;
+        }
+
+        // 3. Si es cliente, obtener sus casos
+        let casos = [];
+        if (user.rol === 'cliente') {
+          casos = await Caso.find({ clienteId: user._id })
+            .select('titulo tipo estado descripcion numeroExpediente')
+            .populate('abogadoId', 'nombre apellido')
+            .lean();
+        }
+
+        // 4. Generar prompt contextual
+        const contextPrompt = this.generateContextualPrompt(user, casos, req.body.message);
+        return contextPrompt;
+
+      } catch (error) {
+        console.log('Error al verificar token o obtener datos:', error);
+        return req.body.message;
+      }
+
     } catch (error) {
-      console.error("Error al consultar Ollama:", error);
-      return "Lo siento, hubo un error al generar la respuesta.";
+      console.error('Error en handleChatRequest:', error);
+      return req.body.message;
     }
+  }
+
+  generateContextualPrompt(user, casos, userMessage) {
+    let contextPrompt = `Como asistente legal, estás hablando con ${user.nombre} ${user.apellido} (${user.rol}).`;
+
+    if (user.rol === 'cliente') {
+      contextPrompt += '\n\nInformación de sus casos:';
+      
+      if (casos.length > 0) {
+        casos.forEach(caso => {
+          contextPrompt += `\n- Caso "${caso.titulo}" (${caso.numeroExpediente}):
+          - Tipo: ${caso.tipo}
+          - Estado: ${caso.estado}
+          - Abogado asignado: ${caso.abogadoId ? `${caso.abogadoId.nombre} ${caso.abogadoId.apellido}` : 'No asignado'}`;
+        });
+      } else {
+        contextPrompt += '\nNo tiene casos registrados actualmente.';
+      }
+    }
+
+    contextPrompt += `\n\nPregunta del usuario: ${userMessage}\n\nPor favor, proporciona una respuesta profesional y útil utilizando markdown cuando sea apropiado:
+    - Usa **negrita** para enfatizar puntos importantes
+    - Usa listas donde sea apropiado
+    - Divide la respuesta en secciones si es necesario
+    - Si mencionas fechas o números de expediente, resáltalos
+    - Mantén un tono profesional pero amigable`;
+
+    return contextPrompt;
   }
 
   async *streamResponseFromOllama(userMessage) {
     try {
-      // Agregar instrucciones para formato markdown
-      const formattedPrompt = `Por favor, proporciona una respuesta utilizando markdown cuando sea apropiado:
-- Usa **negrita** para enfatizar puntos importantes
-- Usa *cursiva* para términos especiales
-- Usa \`código\` para términos técnicos
-- Usa listas cuando enumeres items
-- Usa > para citas o notas importantes
-- Usa \`\`\` para bloques de código
-
-Aquí está la consulta del usuario: ${userMessage}`;
-
       const requestBody = {
         model: this.model,
-        prompt: formattedPrompt,
-        stream: true,
-        temperature: 0.5,
-        max_tokens: 250,
+        prompt: userMessage,
+        stream: true, // Habilitamos streaming
+        temperature: 0.7,
+        max_tokens: 500,
       };
+
+      console.log("Iniciando stream con Ollama");
 
       const response = await fetch(this.apiUrl, {
         method: "POST",
@@ -88,7 +167,7 @@ Aquí está la consulta del usuario: ${userMessage}`;
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(`Error HTTP: ${response.status}`);
       }
 
       const reader = response.body.getReader();
@@ -100,26 +179,41 @@ Aquí está la consulta del usuario: ${userMessage}`;
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n");
-
-        buffer = lines.pop() || "";
-
-        for (const line of lines) {
+        
+        // Procesar el buffer línea por línea
+        let newlineIndex;
+        while ((newlineIndex = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, newlineIndex);
+          buffer = buffer.slice(newlineIndex + 1);
+          
           if (line.trim()) {
             try {
-              const json = JSON.parse(line);
-              if (json.response) {
-                yield json.response;
+              const data = JSON.parse(line);
+              if (data.response) {
+                yield data.response;
               }
             } catch (e) {
-              console.error("Error parsing JSON:", e);
+              console.error('Error al parsear línea:', e);
             }
           }
         }
       }
+
+      // Procesar cualquier dato restante en el buffer
+      if (buffer.trim()) {
+        try {
+          const data = JSON.parse(buffer);
+          if (data.response) {
+            yield data.response;
+          }
+        } catch (e) {
+          console.error('Error al parsear buffer final:', e);
+        }
+      }
+
     } catch (error) {
-      console.error("Error al consultar Ollama:", error);
-      yield "Lo siento, hubo un error al generar la respuesta.";
+      console.error("Error en streamResponseFromOllama:", error);
+      throw error;
     }
   }
 }

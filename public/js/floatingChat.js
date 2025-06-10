@@ -169,15 +169,50 @@ function initChat() {
 
   // Configurar eventos para el botón de enviar y el input
   const chatInput = document.getElementById("chat-input");
-  const sendButton = document.getElementById("send-button");
+  const sendButton = document.getElementById("send-button");  // Función auxiliar para obtener cookies
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return null;
+  }
+  // Función para obtener el token de autenticación
+  function getAuthToken() {
+    // Intentar obtener el token del localStorage
+    let token = localStorage.getItem('token');
+    console.log('Token en localStorage:', token ? 'encontrado' : 'no encontrado');
+    
+    // Si no está en localStorage, intentar obtenerlo de las cookies
+    if (!token) {
+      token = getCookie('token');
+      console.log('Token en cookies:', token ? 'encontrado' : 'no encontrado');
+    }
+    
+    // Si aún no hay token, intentar obtenerlo del userData
+    if (!token) {
+      const userData = JSON.parse(localStorage.getItem('userData') || '{}');
+      token = userData.token;
+      console.log('Token en userData:', token ? 'encontrado' : 'no encontrado');
+    }
+
+    if (!token) {
+      console.warn('No se encontró token de autenticación');
+    }
+    
+    return token;
+  }
 
   // Función para enviar mensaje
   function sendMessage() {
     const message = chatInput.value.trim();
     if (message) {
+      const token = getAuthToken();
+      console.log('Token encontrado:', token ? 'Sí' : 'No');
+      
       socket.emit("new-message", {
         username: username,
         message: message,
+        token: token
       });
       chatInput.value = "";
     }

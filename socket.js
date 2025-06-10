@@ -16,8 +16,8 @@ module.exports = (io) => {
 
     socket.on("new-message", async (data) => {
       try {
-        const { username, message } = data;
-        console.log("Mensaje recibido:", { username, message });
+        const { username, message, token } = data;
+        console.log("Mensaje recibido de:", username);
 
         // Guardar y emitir mensaje del usuario inmediatamente
         const savedUserMessage = await messageService.createMessage({
@@ -29,43 +29,84 @@ module.exports = (io) => {
         // Indicar que el bot está escribiendo
         io.emit("writing", "Asistente");
 
-        // Iniciar respuesta streaming
-        let fullResponse = "";
-        let lastEmit = Date.now();
-        const EMIT_INTERVAL = 100; // Emitir cada 100ms
+        try {
+          // Preparar el contexto para la respuesta
+          const contextRequest = {
+            headers: {
+              authorization: `Bearer ${token}`,
+            },
+            body: {
+              message,
+            },
+          };
 
-        for await (const chunk of ollamaService.streamResponseFromOllama(message)) {
-          fullResponse += chunk;
+          // Obtener mensaje contextualizado
+          console.log("Obteniendo contexto del usuario...");
+          const contextualMessage = await ollamaService.handleChatRequest(contextRequest);
+          console.log("Mensaje contextualizado generado");
 
-          // Emitir chunks periódicamente para una experiencia fluida
-          const now = Date.now();
-          if (now - lastEmit >= EMIT_INTERVAL) {
+          // Iniciar respuesta streaming
+          let fullResponse = "";
+          let buffer = "";
+          let lastEmit = Date.now();
+          const EMIT_INTERVAL = 25; // Reducido a 25ms para más fluidez
+
+          console.log("Iniciando streaming de respuesta...");
+
+          // Obtener stream de respuesta usando el método actualizado
+          for await (const chunk of ollamaService.streamResponseFromOllama(contextualMessage)) {
+            fullResponse += chunk;
+            buffer += chunk;
+
+            // Emitir chunks más frecuentemente
+            const now = Date.now();
+            if (now - lastEmit >= EMIT_INTERVAL) {
+              // Enviar el buffer actual
+              if (buffer.trim()) {
+                io.emit("assistant-stream", {
+                  username: "Asistente",
+                  message: fullResponse.trim(),
+                  isComplete: false
+                });
+                lastEmit = now;
+                buffer = ""; // Limpiar el buffer después de emitir
+              }
+            }
+          }
+
+          // Asegurarse de enviar cualquier contenido restante en el buffer
+          if (buffer.trim()) {
             io.emit("assistant-stream", {
               username: "Asistente",
               message: fullResponse.trim(),
-              isComplete: false,
+              isComplete: false
             });
-            lastEmit = now;
           }
+
+          // Guardar y emitir mensaje completo
+          const savedBotMessage = await messageService.createMessage({
+            username: "Asistente",
+            message: fullResponse.trim()
+          });
+
+          // Emitir mensaje final completo
+          io.emit("assistant-stream", {
+            username: "Asistente",
+            message: fullResponse.trim(),
+            isComplete: true
+          });
+
+          console.log("Streaming completado");
+
+        } catch (error) {
+          console.error("Error al procesar respuesta:", error);
+          throw error;
         }
-
-        // Guardar y emitir mensaje completo
-        const savedBotMessage = await messageService.createMessage({
-          username: "Asistente",
-          message: fullResponse.trim(),
-        });
-
-        io.emit("assistant-stream", {
-          username: "Asistente",
-          message: fullResponse.trim(),
-          isComplete: true,
-        });
       } catch (error) {
         console.error("Error en el manejo del mensaje:", error);
         const errorMessage = await messageService.createMessage({
           username: "Asistente",
-          message:
-            "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta de nuevo.",
+          message: "Lo siento, ocurrió un error al procesar tu mensaje. Por favor, intenta de nuevo.",
         });
         io.emit("new-message", errorMessage);
         socket.emit("error", {
