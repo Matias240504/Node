@@ -119,6 +119,13 @@ class OllamaService {
   }
 
   generateContextualPrompt(user, casos, userMessage) {
+    // Detectar saludos simples para evitar añadir contexto innecesario
+    const greetingRegex = /^(hola|hello|hi|buenos dias|buenas tardes|buenas noches)[!.¡¿,\s]*$/i;
+    if (greetingRegex.test(userMessage.trim())) {
+      // Respuesta corta y cordial sin incluir casos del cliente
+      return `Eres un asistente legal profesional. El usuario te ha saludado con "${userMessage}". Responde de forma cordial y breve, sin añadir información no solicitada.`;
+    }
+
     let contextPrompt = `Como asistente legal, estás hablando con ${user.nombre} ${user.apellido} (${user.rol}).`;
 
     if (user.rol === 'cliente') {
@@ -136,12 +143,10 @@ class OllamaService {
       }
     }
 
-    contextPrompt += `\n\nPregunta del usuario: ${userMessage}\n\nPor favor, proporciona una respuesta profesional y útil utilizando markdown cuando sea apropiado:
-    - Usa **negrita** para enfatizar puntos importantes
-    - Usa listas donde sea apropiado
-    - Divide la respuesta en secciones si es necesario
-    - Si mencionas fechas o números de expediente, resáltalos
-    - Mantén un tono profesional pero amigable`;
+    contextPrompt += `\n\nPregunta del usuario: ${userMessage}\n\nPor favor, proporciona una respuesta profesional y útil utilizando markdown cuando sea apropiado:\n    - Usa **negrita** para enfatizar puntos importantes\n    - Usa listas donde sea apropiado\n    - Divide la respuesta en secciones si es necesario\n    - Si mencionas fechas o números de expediente, resáltalos\n    - Mantén un tono profesional pero amigable\n    - Responde de forma **concisa** y sólo con la información solicitada`;
+
+    // Instrucciones adicionales sobre creación de casos
+    contextPrompt += `\n\nSi el usuario desea **crear un nuevo caso**, asegúrate de recopilar o confirmar la siguiente información mínima:\n- **Título del caso**\n- **Tipo de caso**\n- **Prioridad**\n- **Descripción detallada**\n- Subida de **documentos** (opcional).`;
 
     return contextPrompt;
   }
