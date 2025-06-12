@@ -9,13 +9,17 @@
         .notif:last-child{border:none;}
         .notif h4{margin:0;}
         .notif small{color:#666;}
+        .page-title{color:#000;font-weight:700;margin:0;}
     </style>
 </head>
 <body>
  <div class="dashboard-container">
     <%- include('./partials/sidebar',{currentPath:'/cliente/notificaciones',user:user}) %>
     <div class="main-content">
-        <h2>Notificaciones</h2>
+        <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;">
+          <h2 class="page-title">Notificaciones</h2>
+          <span id="currentDate"></span>
+        </div>
         <div class="notif-container" id="notifList"></div>
     </div>
  </div>
@@ -64,7 +68,19 @@
  }
  document.getElementById('closeModal').onclick=()=>document.getElementById('modal').style.display='none';
  window.onclick=e=>{if(e.target.id==='modal')document.getElementById('modal').style.display='none';};
- cargar();
+ 
+ // mostrar fecha actual
+ function mostrarFechaActual(){
+   const opciones={ weekday:'long', year:'numeric', month:'long', day:'numeric' };
+   const fecha=new Date().toLocaleDateString('es-ES',opciones);
+   document.getElementById('currentDate').textContent=capitalizar(fecha);
+ }
+ function capitalizar(texto){return texto.replace(/\b\w/g,l=>l.toUpperCase());}
+
+ document.addEventListener('DOMContentLoaded',()=>{
+   cargar();
+   mostrarFechaActual();
+ });
  </script>
 </body>
 </html>
