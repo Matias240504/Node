@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <%- include('./partials/styles', { title: 'Seleccionar Usuario' }) %>
+    <style>
+        .table-container{max-width:800px;margin:40px auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.1);}        
+        table{width:100%;border-collapse:collapse;}        
+        th,td{padding:10px;border-bottom:1px solid #eee;text-align:left;}        
+        th{background:#f5f5f5;}        
+        button{padding:6px 10px;background:var(--primary-color);color:#fff;border:none;border-radius:4px;cursor:pointer;}        
+        button:hover{background:var(--primary-hover);}        
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('./partials/sidebar', { currentPath: '/juez/cambiarRol', user: user }) %>
+        <div class="main-content">
+            <h2>Seleccionar Usuario para Cambiar Rol</h2>
+            <!-- Filtros -->
+            <div class="filters" style="margin-bottom:20px;display:flex;gap:10px;align-items:center;">
+                <select id="rolFilter">
+                    <option value="">Todos los roles</option>
+                    <option value="cliente">Cliente</option>
+                    <option value="abogado">Abogado</option>
+                    <option value="juez">Juez</option>
+                </select>
+                <input type="text" id="busquedaInput" placeholder="Buscar nombre o email" style="flex:1;padding:8px;">
+                <button id="applyFiltersBtn">Filtrar</button>
+                <button id="resetFiltersBtn">Limpiar</button>
+            </div>
+            <div class="table-container" id="usuariosContainer"></div>
+            <div id="pagination" style="margin-top:20px;text-align:center;"></div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded',()=>{
+            const usuariosContainer=document.getElementById('usuariosContainer');
+            const pagination=document.getElementById('pagination');
+            const rolFilter=document.getElementById('rolFilter');
+            const busquedaInput=document.getElementById('busquedaInput');
+            const applyBtn=document.getElementById('applyFiltersBtn');
+            const resetBtn=document.getElementById('resetFiltersBtn');
+            let currentPage=1;
+
+            async function cargarUsuarios(page){
+                const params=new URLSearchParams();
+                params.append('page',page);
+                params.append('limit',5);
+                if(rolFilter.value)params.append('rol',rolFilter.value);
+                if(busquedaInput.value.trim())params.append('busqueda',busquedaInput.value.trim());
+                const res=await fetch(`/juez/api/usuarios?${params.toString()}`,{headers:{'Authorization':`Bearer ${localStorage.getItem('token')}`}});
+                const data=await res.json();
+                renderTabla(data.usuarios);
+                renderPaginacion(data.paginacion);
+            }
+
+            function renderTabla(usuarios){
+                let html=`<table><thead><tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Acción</th></tr></thead><tbody>`;
+                if(usuarios.length){
+                   usuarios.forEach(u=>{
+                       html+=`<tr><td>${u.nombre} ${u.apellido}</td><td>${u.email}</td><td>${u.rol}</td><td><a href="/juez/cambiarRol/${u._id}"><button>Cambiar Rol</button></a></td></tr>`;
+                   });
+                }else{
+                   html+='<tr><td colspan="4" style="text-align:center;">No hay usuarios</td></tr>';
+                }
+                html+='</tbody></table>';
+                usuariosContainer.innerHTML=html;
+            }
+
+            function renderPaginacion(pag){
+               pagination.innerHTML='';
+               if(pag.totalPages<=1)return;
+               const addBtn=(text,disabled,onClick)=>{
+                 const btn=document.createElement('button');btn.textContent=text;btn.disabled=disabled;btn.onclick=onClick;pagination.appendChild(btn);
+               };
+               addBtn('<',!pag.hasPrevPage,()=>{currentPage--;cargarUsuarios(currentPage);});
+               for(let i=1;i<=pag.totalPages;i++){
+                 addBtn(i,i===pag.page,()=>{currentPage=i;cargarUsuarios(currentPage);});
+               }
+               addBtn('>',!pag.hasNextPage,()=>{currentPage++;cargarUsuarios(currentPage);});
+            }
+
+            applyBtn.addEventListener('click',()=>{currentPage=1;cargarUsuarios(currentPage);});
+            resetBtn.addEventListener('click',()=>{rolFilter.value='';busquedaInput.value='';currentPage=1;cargarUsuarios(currentPage);});
+
+            cargarUsuarios(currentPage);
+        });
+    </script>
+</body>
+</html>
