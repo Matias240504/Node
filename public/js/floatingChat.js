@@ -38,7 +38,7 @@ function createChatElements() {
   // Crear la estructura interna del chat
   chatContainer.innerHTML = `
     <div class="chat-header">
-      <h3>Chat de Clientes</h3>
+      <h3>Asistente Virtual</h3>
       <button id="close-chat" class="close-chat"><i class="fas fa-times"></i></button>
     </div>
     <div id="chat-messages" class="chat-messages"></div>

@@ -4,6 +4,7 @@ const Audiencia = require("../models/audienciaModel");
 const Sala = require("../models/salaModel");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
+const Notificacion = require('../models/notificacionModel');
 
 /**
  * Renderiza el dashboard del abogado
@@ -1200,6 +1201,19 @@ exports.crearAudiencia = async (req, res) => {
     caso.audiencias = caso.audiencias || [];
     caso.audiencias.push(nuevaAudiencia._id);
     await caso.save();
+
+    // Notificar al cliente dueño del caso
+    if (caso.clienteId) {
+      await Notificacion.create({
+        usuarioId: caso.clienteId,
+        tipo: "audiencia",
+        titulo: `Nueva audiencia para el caso ${caso.titulo}`,
+        mensaje: `Se programó una audiencia (${nuevaAudiencia.tipo}) el ${new Date(
+          nuevaAudiencia.fecha
+        ).toLocaleString()}`,
+        datos: nuevaAudiencia.toObject(),
+      });
+    }
 
     res.status(201).json({
       message: "Audiencia creada exitosamente",

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <%- include('./partials/styles',{title:'Notificaciones'}) %>
+    <style>
+        .notif-container{max-width:800px;margin:40px auto;background:#fff;padding:20px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.1);}        
+        .notif{border-bottom:1px solid #ddd;padding:10px 0;cursor:pointer;}
+        .notif.leida{opacity:0.6;}
+        .notif:last-child{border:none;}
+        .notif h4{margin:0;}
+        .notif small{color:#666;}
+    </style>
+</head>
+<body>
+ <div class="dashboard-container">
+    <%- include('./partials/sidebar',{currentPath:'/cliente/notificaciones',user:user}) %>
+    <div class="main-content">
+        <h2>Notificaciones</h2>
+        <div class="notif-container" id="notifList"></div>
+    </div>
+ </div>
+
+ <div id="modal" class="modal" style="display:none;">
+   <div class="modal-content" style="max-width:600px;">
+     <span id="closeModal" class="close">&times;</span>
+     <h3 id="modalTitulo"></h3>
+     <pre id="modalDatos" style="white-space:pre-wrap;"></pre>
+   </div>
+ </div>
+ <script>
+ async function cargar(){
+   const res=await fetch('/cliente/api/notificaciones');
+   const data=await res.json();
+   const cont=document.getElementById('notifList');
+   cont.innerHTML='';
+   data.forEach(n=>{
+     const div=document.createElement('div');
+     div.className='notif'+(n.leido?' leida':'');
+     div.innerHTML=`<h4>${n.titulo}</h4><small>${new Date(n.fecha).toLocaleString()}</small>`;
+     div.onclick=()=>mostrarDetalle(n);
+     cont.appendChild(div);
+   });
+ }
+ function mostrarDetalle(n){
+   document.getElementById('modalTitulo').textContent=n.titulo;
+   document.getElementById('modalDatos').textContent=JSON.stringify(n.datos,null,2);
+   document.getElementById('modal').style.display='block';
+   fetch(`/cliente/api/notificaciones/${n._id}/leido`,{method:'PATCH'}).then(()=>cargar());
+ }
+ document.getElementById('closeModal').onclick=()=>document.getElementById('modal').style.display='none';
+ window.onclick=e=>{if(e.target.id==='modal')document.getElementById('modal').style.display='none';};
+ cargar();
+ </script>
+</body>
+</html>

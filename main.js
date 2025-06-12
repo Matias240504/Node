@@ -13,6 +13,7 @@ const { verifyViewToken, viewAllowRoles } = require('./middlewares/viewAuthMiddl
 const multer = require('multer');
 const http = require('http');
 const socketIo = require('socket.io');
+const clienteRoutes = require('./routers/clienteRoutes');
 
 dotenv.config();
 
@@ -50,6 +51,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/casos', casoRoutes);
 app.use('/abogado', abogadoRoutes); // Añadir rutas de abogado
 app.use('/juez', juezRoutes); // Usar las rutas de juez
+app.use('/cliente', clienteRoutes);
 
 // Ruta específica para obtener datos de un abogado (para el cliente)
 const { verifyToken, allowRoles } = require('./middlewares/authMiddleware');
