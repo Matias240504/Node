@@ -284,6 +284,42 @@
             font-size: 0.9rem;
             color: var(--text-secondary-color);
         }
+        
+        /* Modal para detalle de caso */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+        
+        .modal-container {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+        }
+        
+        .modal-content {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .modal-close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body>
@@ -626,7 +662,7 @@
             casosContainer.addEventListener('click', (event) => {
                 if (event.target.classList.contains('btn-detalle')) {
                     const casoId = event.target.getAttribute('data-id');
-                    window.location.href = `/cliente/caso/${casoId}`;
+                    abrirDetalleCasoCliente(casoId);
                 }
             });
             
@@ -634,6 +670,19 @@
             cargarCasos(currentPage);
         });
     </script>
+    
+    <!-- Modal para detalle de caso (solo lectura) -->
+    <div class="modal-overlay" id="clienteModalOverlay" style="display:none;"></div>
+    <div class="modal-container" id="clienteModalContainer" style="display:none;">
+        <div class="modal-content">
+            <button class="modal-close" id="clienteModalClose">&times;</button>
+            <div id="clienteModalBody">
+                <!-- Contenido dinámico -->
+            </div>
+        </div>
+    </div>
+    
+    <script src="/js/clienteDetalleCasoModal.js"></script>
     <script src="/js/floatingChat.js"></script>
 </body>
 </html>
