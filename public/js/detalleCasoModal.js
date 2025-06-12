@@ -1,6 +1,12 @@
 // Variables globales
 var casoActual = null;
 
+// Función para obtener el token JWT de las cookies
+function obtenerTokenDeCookie() {
+    const match = document.cookie.split('; ').find(r => r.startsWith('token='));
+    return match ? match.split('=')[1] : null;
+}
+
 // Inicializar eventos cuando el documento esté listo
 $(document).ready(function() {
     console.log('Inicializando eventos del modal');
@@ -86,9 +92,11 @@ window.abrirDetalleCaso = function(casoId) {
     });
     
     // Cargar datos del caso
+    const token = obtenerTokenDeCookie();
     $.ajax({
         url: `/abogado/api/casos/${casoId}`,
         method: 'GET',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         success: function(response) {
             console.log('Respuesta del servidor:', response); // Para debug
             
@@ -337,10 +345,12 @@ function cambiarEstadoCaso() {
     const btnTextoOriginal = $btnCambiarEstado.html();
     $btnCambiarEstado.html('<i class="fas fa-spinner fa-spin"></i> Actualizando...').prop('disabled', true);
 
+    const token = obtenerTokenDeCookie();
     $.ajax({
         url: `/abogado/api/casos/${casoActual._id}/estado`,
         method: 'PUT',
         data: { estado: nuevoEstado },
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         success: function(response) {
             // Actualizar badge de estado
             const estadoBadge = $('#casoEstadoBadge');
@@ -391,10 +401,12 @@ function agregarComentarioCaso() {
     const btnTextoOriginal = $btnAgregarComentario.html();
     $btnAgregarComentario.html('<i class="fas fa-spinner fa-spin"></i> Enviando...').prop('disabled', true);
 
+    const token = obtenerTokenDeCookie();
     $.ajax({
         url: `/abogado/api/casos/${casoActual._id}/nota`,
         method: 'POST',
         data: { texto },
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         success: function(response) {
             // Limpiar campo
             $('#nuevoComentario').val('');

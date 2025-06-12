@@ -1,4 +1,4 @@
-require("dotenv").config({ path: "./.env" }); // <-- Cargar el .env desde una carpeta arriba
+require("dotenv").config({ path: "../.env" }); // <-- Cargar el .env desde una carpeta arriba
 const mongoose = require("mongoose");
 const Sala = require("../models/salaModel");
 

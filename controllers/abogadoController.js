@@ -16,7 +16,7 @@ exports.renderDashboard = async (req, res) => {
     const abogadoId = req.user.id;
 
     // Obtener casos asignados al abogado
-    const casos = await Caso.find({ abogadoId })
+    const casos = await Caso.find({ $or: [{ abogadoId }, { abogadoId: null }] })
       .sort({ fechaRegistro: -1 })
       .limit(5)
       .populate("clienteId", "nombre apellido email")
@@ -190,7 +190,7 @@ exports.renderCasos = async (req, res) => {
       error: process.env.NODE_ENV === "development" ? error : {},
     });
   }
-};
+};  
 
 /**
  * Renderiza la lista de audiencias del abogado
@@ -223,10 +223,19 @@ exports.obtenerCasosAbogado = async (req, res) => {
     const abogadoId = req.user.id;
     const { estado } = req.query;
 
-    // Construir filtro
-    const filtro = { abogadoId };
+    // Construir filtro según requisito
+    let filtro = {};
     if (estado && estado !== "todos") {
-      filtro.estado = estado;
+      filtro = {
+        estado,
+        $or: [
+          { abogadoId }, // casos ya asignados a este abogado
+          { abogadoId: null }, // casos aún sin asignar
+        ],
+      };
+    } else {
+      // sin estado específico: mostrar asignados a este abogado y sin asignar
+      filtro.$or = [{ abogadoId }, { abogadoId: null }];
     }
 
     // Obtener casos con filtro
@@ -295,6 +304,7 @@ exports.obtenerAudiencias = async (req, res) => {
       fecha: { $gte: fechaInicio, $lte: fechaFin },
     })
       .sort({ fecha: 1 })
+      .limit(5)
       .populate("casoId", "titulo numeroExpediente clienteId")
       .populate({
         path: "casoId",
@@ -358,8 +368,11 @@ exports.obtenerDetalleCaso = async (req, res) => {
       return res.status(400).json({ message: "ID de caso inválido" });
     }
 
-    // Buscar el caso y verificar que pertenezca al abogado
-    const caso = await Caso.findOne({ _id: id, abogadoId })
+    // Buscar el caso y verificar que pertenezca al abogado o aún no esté asignado
+    const caso = await Caso.findOne({
+      _id: id,
+      $or: [ { abogadoId }, { abogadoId: null } ]
+    })
       .populate("clienteId", "nombre apellido email telefono")
       .populate("abogadoId", "nombre apellido email telefono")
       .populate("comentarios.autor", "nombre apellido email rol")
@@ -736,26 +749,35 @@ exports.obtenerAbogadoPorId = async (req, res) => {
 exports.obtenerCasosConPaginacion = async (req, res) => {
   try {
     const abogadoId = req.user.id;
-    const { estado, pagina = 1, limite = 10 } = req.query;
+    const { estado, tipo, busqueda, pagina = 1, limite = 10 } = req.query;
 
-    // Construir filtro
-    const filtro = { abogadoId };
+    // Construir filtro con la lógica requerida
+    let filtro = {};
     if (estado && estado !== "todos") {
       filtro.estado = estado;
+      filtro.$or = [ { abogadoId }, { abogadoId: null } ];
+    } else {
+      filtro.$or = [ { abogadoId }, { abogadoId: null } ];
     }
 
-    // Calcular skip para paginación
+    if (tipo) {
+      filtro.tipo = tipo;
+    }
+
+    if (busqueda) {
+      const regex = new RegExp(busqueda, 'i');
+      // Combinar con OR existente si lo hay
+      filtro.$or = [ ...(filtro.$or || []), { numeroExpediente: regex }, { titulo: regex } ];
+    }
+
     const skip = (parseInt(pagina) - 1) * parseInt(limite);
 
-    // Obtener total de casos para la paginación
     const total = await Caso.countDocuments(filtro);
-
-    // Obtener casos paginados
     const casos = await Caso.find(filtro)
       .sort({ fechaRegistro: -1 })
       .skip(skip)
       .limit(parseInt(limite))
-      .populate("clienteId", "nombre apellido email")
+      .populate('clienteId', 'nombre apellido email')
       .lean();
 
     res.status(200).json({
@@ -764,15 +786,12 @@ exports.obtenerCasosConPaginacion = async (req, res) => {
         total,
         pagina: parseInt(pagina),
         limite: parseInt(limite),
-        paginas: Math.ceil(total / parseInt(limite)),
-      },
+        paginas: Math.ceil(total / parseInt(limite))
+      }
     });
   } catch (error) {
-    console.error("Error al obtener casos paginados:", error);
-    res.status(500).json({
-      message: "Error al obtener la lista de casos",
-      error: error.message,
-    });
+    console.error('Error al obtener casos paginados:', error);
+    res.status(500).json({ message: 'Error al obtener la lista de casos', error: error.message });
   }
 };
 
@@ -1470,26 +1489,35 @@ exports.renderDetalleCaso = async (req, res) => {
 exports.obtenerCasosConPaginacion = async (req, res) => {
   try {
     const abogadoId = req.user.id;
-    const { estado, pagina = 1, limite = 10 } = req.query;
+    const { estado, tipo, busqueda, pagina = 1, limite = 10 } = req.query;
 
-    // Construir filtro
-    const filtro = { abogadoId };
+    // Construir filtro con la lógica requerida
+    let filtro = {};
     if (estado && estado !== "todos") {
       filtro.estado = estado;
+      filtro.$or = [ { abogadoId }, { abogadoId: null } ];
+    } else {
+      filtro.$or = [ { abogadoId }, { abogadoId: null } ];
     }
 
-    // Calcular skip para paginación
+    if (tipo) {
+      filtro.tipo = tipo;
+    }
+
+    if (busqueda) {
+      const regex = new RegExp(busqueda, 'i');
+      // Combinar con OR existente si lo hay
+      filtro.$or = [ ...(filtro.$or || []), { numeroExpediente: regex }, { titulo: regex } ];
+    }
+
     const skip = (parseInt(pagina) - 1) * parseInt(limite);
 
-    // Obtener total de casos para la paginación
     const total = await Caso.countDocuments(filtro);
-
-    // Obtener casos paginados
     const casos = await Caso.find(filtro)
       .sort({ fechaRegistro: -1 })
       .skip(skip)
       .limit(parseInt(limite))
-      .populate("clienteId", "nombre apellido email")
+      .populate('clienteId', 'nombre apellido email')
       .lean();
 
     res.status(200).json({
@@ -1498,15 +1526,12 @@ exports.obtenerCasosConPaginacion = async (req, res) => {
         total,
         pagina: parseInt(pagina),
         limite: parseInt(limite),
-        paginas: Math.ceil(total / parseInt(limite)),
-      },
+        paginas: Math.ceil(total / parseInt(limite))
+      }
     });
   } catch (error) {
-    console.error("Error al obtener casos con paginación:", error);
-    res.status(500).json({
-      message: "Error al obtener los casos",
-      error: error.message,
-    });
+    console.error('Error al obtener casos paginados:', error);
+    res.status(500).json({ message: 'Error al obtener la lista de casos', error: error.message });
   }
 };
 
@@ -1519,7 +1544,7 @@ exports.obtenerCasosAbogado = async (req, res) => {
   try {
     const abogadoId = req.user.id;
 
-    const casos = await Caso.find({ abogadoId })
+    const casos = await Caso.find({ $or: [{ abogadoId }, { abogadoId: null }] })
       .sort({ fechaRegistro: -1 })
       .populate("clienteId", "nombre apellido email")
       .lean();
