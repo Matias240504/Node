@@ -2,6 +2,8 @@ require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const Caso = require('../models/caso');
+const Audiencia = require('../models/audienciaModel');
+const Notificacion = require('../models/notificacionModel');
 
 class OllamaService {
   constructor() {
@@ -94,17 +96,33 @@ class OllamaService {
           return req.body.message;
         }
 
-        // 3. Si es cliente, obtener sus casos
-        let casos = [];
+        // 3. Si es cliente, obtener sus casos, audiencias y notificaciones
+        let casos = [], audiencias = [], notifs = [];
         if (user.rol === 'cliente') {
           casos = await Caso.find({ clienteId: user._id })
             .select('titulo tipo estado descripcion numeroExpediente')
             .populate('abogadoId', 'nombre apellido')
             .lean();
+
+          const caseIds = casos.map(c => c._id);
+          if(caseIds.length){
+            audiencias = await Audiencia.find({ casoId: { $in: caseIds } })
+              .select('tipo fecha hora salaId abogadoId estado')
+              .populate('salaId','numero_de_sala')
+              .populate('abogadoId','nombre apellido')
+              .sort({ fecha: 1 })
+              .lean();
+          }
+
+          notifs = await Notificacion.find({ usuarioId: user._id })
+            .select('titulo mensaje fecha leido datos')
+            .sort({ fecha: -1 })
+            .limit(5)
+            .lean();
         }
 
         // 4. Generar prompt contextual
-        const contextPrompt = this.generateContextualPrompt(user, casos, req.body.message);
+        const contextPrompt = this.generateContextualPrompt(user, casos, audiencias, notifs, req.body.message);
         return contextPrompt;
 
       } catch (error) {
@@ -118,7 +136,7 @@ class OllamaService {
     }
   }
 
-  generateContextualPrompt(user, casos, userMessage) {
+  generateContextualPrompt(user, casos, audiencias, notifs, userMessage) {
     // Detectar saludos simples para evitar añadir contexto innecesario
     const greetingRegex = /^(hola|hello|hi|buenos dias|buenas tardes|buenas noches)[!.¡¿,\s]*$/i;
     if (greetingRegex.test(userMessage.trim())) {
@@ -140,6 +158,24 @@ class OllamaService {
         });
       } else {
         contextPrompt += '\nNo tiene casos registrados actualmente.';
+      }
+
+      // Agregar audiencias próximas
+      if(audiencias && audiencias.length){
+        contextPrompt += '\n\nAudiencias próximas:';
+        audiencias.slice(0,5).forEach(a => {
+          const fecha = new Date(a.fecha).toLocaleDateString('es-ES');
+          contextPrompt += `\n- ${a.tipo} el ${fecha} a las ${a.hora} en sala ${a.salaId? a.salaId.numero_de_sala : 'N/A'} con ${a.abogadoId? a.abogadoId.nombre+' '+a.abogadoId.apellido : 'abogado no asignado'}`;
+        });
+      }
+
+      // Agregar últimas notificaciones
+      if(notifs && notifs.length){
+        contextPrompt += '\n\nÚltimas notificaciones:';
+        notifs.forEach(n=>{
+          const fecha = new Date(n.fecha).toLocaleDateString('es-ES');
+          contextPrompt += `\n- [${n.leido?'Leída':'Sin leer'}] ${n.titulo} (${fecha})`;
+        });
       }
     }
 
