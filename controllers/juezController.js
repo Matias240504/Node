@@ -1,6 +1,7 @@
 const Caso = require('../models/caso');
 const User = require('../models/userModel');
 const Audiencia = require('../models/audienciaModel');
+const Reporte = require('../models/reporteModel');
 
 /**
  * Renderiza el dashboard del juez/admin con datos globales y usuarios recientes
@@ -11,8 +12,7 @@ async function renderDashboard(req, res) {
         const usuariosTotales = await User.countDocuments();
         const casosActivos = await Caso.countDocuments({ estado: { $in: ['aceptado', 'iniciado'] } });
         const audienciasProximas = await Audiencia.countDocuments({ fecha: { $gte: new Date() } });
-        // Reportes: puedes cambiar la lógica cuando implementes reportes reales
-        const reportes = 0;
+        const reportes = await Reporte.countDocuments();
 
         // Usuarios recientes (últimos 5)
         let usuarios = await User.find({})
@@ -199,6 +199,7 @@ async function generarReporteCasos(req, res){
      }
 
      doc.end();
+     await Reporte.create({ nombreArchivo: filename, tipo: 'casos', mes, juezId: req.user._id });
    } catch (err) {
      console.error('Error generarReporteCasos:', err);
      res.status(500).json({ message: 'Error al generar reporte' });
@@ -236,6 +237,7 @@ async function generarReporteAudiencias(req,res){
      });
      if(audiencias.length===0) doc.fontSize(14).text('No hay audiencias en este mes',{align:'center'});
      doc.end();
+     await Reporte.create({ nombreArchivo: filename, tipo: 'audiencias', mes, juezId: req.user._id });
   }catch(err){console.error('Error generarReporteAudiencias',err);res.status(500).json({message:'Error al generar reporte'});}
 }
 
@@ -259,6 +261,7 @@ async function generarReporteUsuarios(req,res){
     });
     if(usuarios.length===0) doc.fontSize(14).text('No hay usuarios registrados en este mes',{align:'center'});
     doc.end();
+    await Reporte.create({ nombreArchivo: filename, tipo: 'usuarios', mes, juezId: req.user._id });
   }catch(err){console.error('Error generarReporteUsuarios',err);res.status(500).json({message:'Error al generar reporte'});}
 }
 
