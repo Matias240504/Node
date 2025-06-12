@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <%- include('./partials/styles', { title: 'Reportes' }) %>
+    <style>
+        .report-container{max-width:500px;margin:40px auto;background:#fff;padding:30px;border-radius:8px;box-shadow:0 2px 6px rgba(0,0,0,.1);}        
+        label{display:block;font-weight:600;margin-bottom:6px;}        
+        input,button{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:1rem;}        
+        button{background:var(--primary-color);color:#fff;border:none;cursor:pointer;}        
+        button:hover{background:var(--primary-hover);}        
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <%- include('./partials/sidebar', { currentPath: '/juez/reportes', user: user }) %>
+        <div class="main-content">
+            <h2>Generar Reportes Mensuales</h2>
+            <div class="report-container">
+                <label for="mesInput">Seleccione mes:</label>
+                <input type="month" id="mesInput" value="<%= defaultMonth %>">
+                <button id="casosBtn" style="margin-top:15px;">Casos</button>
+                <button id="audienciasBtn" style="margin-top:10px;">Audiencias</button>
+                <button id="usuariosBtn" style="margin-top:10px;">Usuarios</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        const mesInput=document.getElementById('mesInput');
+        const makeHandler=(ruta)=>()=>{const mes=mesInput.value;if(!mes){alert('Seleccione un mes');return;}window.location=`/juez/reportes/${ruta}?mes=${mes}`;};
+        document.getElementById('casosBtn').addEventListener('click',makeHandler('casos'));
+        document.getElementById('audienciasBtn').addEventListener('click',makeHandler('audiencias'));
+        document.getElementById('usuariosBtn').addEventListener('click',makeHandler('usuarios'));
+    </script>
+</body>
+</html>

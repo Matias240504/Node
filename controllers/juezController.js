@@ -133,10 +133,143 @@ async function listUsers(req, res) {
   }
 }
 
+// ======================== REPORTES =====================
+/** Renderiza la página de reportes */
+function renderReportesPage(req, res) {
+  const hoy = new Date();
+  const defaultMonth = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, '0')}`;
+  res.render('juez/reportes', { user: req.user, defaultMonth });
+}
+
+/** Utilidad para validar mes y rango */
+function obtenerRangoMes(mesStr){
+  if (!mesStr || !/\d{4}-\d{2}/.test(mesStr)) return null;
+  const [anioStr, mStr] = mesStr.split('-');
+  const inicio = new Date(parseInt(anioStr), parseInt(mStr) - 1, 1);
+  const fin = new Date(parseInt(anioStr), parseInt(mStr), 1);
+  return { inicio, fin };
+}
+
+/** Genera PDF con casos de un mes */
+async function generarReporteCasos(req, res){
+   try {
+     const PDFDocument = require('pdfkit');
+     const Caso = require('../models/caso');
+
+     const { mes } = req.query;
+     const rango = obtenerRangoMes(mes);
+     if(!rango) return res.status(400).json({message:'mes inválido'});
+
+     const casos = await Caso.find({ fechaRegistro: { $gte: rango.inicio, $lt: rango.fin } })
+       .populate('clienteId', 'nombre apellido email')
+       .populate('abogadoId', 'nombre apellido email')
+       .populate('juezId', 'nombre apellido email')
+       .lean();
+
+     // Crear PDF
+     const doc = new PDFDocument({ margin: 30, size: 'A4' });
+     const filename = `reporte_casos_${mes}.pdf`;
+     res.setHeader('Content-Type', 'application/pdf');
+     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+     doc.pipe(res);
+
+     doc.fontSize(18).text(`Reporte de Casos - ${mes}`, { align: 'center' });
+     doc.moveDown();
+
+     casos.forEach((c, idx) => {
+       doc.fontSize(14).fillColor('#000').text(`${idx + 1}. ${c.titulo} (${c.numeroExpediente})`);
+       doc.fontSize(11);
+       doc.text(`Tipo: ${c.tipo} | Prioridad: ${c.prioridad} | Estado: ${c.estado}`);
+       const cliente = c.clienteId ? `${c.clienteId.nombre} ${c.clienteId.apellido}` : 'N/A';
+       const abogado = c.abogadoId ? `${c.abogadoId.nombre} ${c.abogadoId.apellido}` : 'N/A';
+       const juez = c.juezId ? `${c.juezId.nombre} ${c.juezId.apellido}` : 'N/A';
+       doc.text(`Cliente: ${cliente}`);
+       doc.text(`Abogado: ${abogado}`);
+       doc.text(`Juez: ${juez}`);
+       doc.text(`Fecha de Registro: ${new Date(c.fechaRegistro).toLocaleDateString()}`);
+       doc.moveDown(0.5);
+       doc.text(`Descripción: ${c.descripcion}`);
+       doc.moveDown();
+       doc.moveTo(doc.x, doc.y).lineTo(doc.page.width - doc.options.margin, doc.y).stroke('#aaa');
+       doc.moveDown();
+     });
+
+     if (casos.length === 0) {
+       doc.fontSize(14).text('No hay casos registrados en este mes.', { align: 'center' });
+     }
+
+     doc.end();
+   } catch (err) {
+     console.error('Error generarReporteCasos:', err);
+     res.status(500).json({ message: 'Error al generar reporte' });
+   }
+ }
+
+/** Genera PDF con audiencias por mes */
+async function generarReporteAudiencias(req,res){
+  try{
+     const PDFDocument=require('pdfkit');
+     const Audiencia=require('../models/audienciaModel');
+     const Caso=require('../models/caso');
+     const {mes}=req.query;const rango=obtenerRangoMes(mes);
+     if(!rango) return res.status(400).json({message:'mes inválido'});
+     const audiencias=await Audiencia.find({fecha:{ $gte:rango.inicio,$lt:rango.fin }})
+       .populate('casoId','titulo numeroExpediente')
+       .populate('juezId','nombre apellido')
+       .lean();
+     const doc=new PDFDocument({margin:30,size:'A4'});
+     const filename=`reporte_audiencias_${mes}.pdf`;
+     res.setHeader('Content-Type','application/pdf');
+     res.setHeader('Content-Disposition',`attachment; filename="${filename}"`);
+     doc.pipe(res);
+     doc.fontSize(18).text(`Reporte de Audiencias - ${mes}`,{align:'center'});doc.moveDown();
+     audiencias.forEach((a,idx)=>{
+        doc.fontSize(14).text(`${idx+1}. ${a.tipo} - ${a.casoId? a.casoId.titulo:'Sin caso'}`);
+        doc.fontSize(11);
+        doc.text(`Caso: ${a.casoId? a.casoId.numeroExpediente:''}`);
+        doc.text(`Fecha: ${new Date(a.fecha).toLocaleDateString()} ${a.hora}`);
+        doc.text(`Estado: ${a.estado} | Resultado: ${a.resultado}`);
+        const juez=a.juezId? `${a.juezId.nombre} ${a.juezId.apellido}`:'N/A';
+        doc.text(`Juez: ${juez}`);
+        doc.text(`Descripción: ${a.descripcion}`);
+        doc.moveDown(); doc.moveTo(doc.x, doc.y).lineTo(doc.page.width-doc.options.margin, doc.y).stroke('#aaa'); doc.moveDown();
+     });
+     if(audiencias.length===0) doc.fontSize(14).text('No hay audiencias en este mes',{align:'center'});
+     doc.end();
+  }catch(err){console.error('Error generarReporteAudiencias',err);res.status(500).json({message:'Error al generar reporte'});}
+}
+
+/** Genera PDF con usuarios nuevos por mes */
+async function generarReporteUsuarios(req,res){
+  try{
+    const PDFDocument=require('pdfkit');
+    const User=require('../models/userModel');
+    const {mes}=req.query;const rango=obtenerRangoMes(mes);
+    if(!rango) return res.status(400).json({message:'mes inválido'});
+    const usuarios=await User.find({fechaRegistro:{ $gte:rango.inicio,$lt:rango.fin }})
+      .lean();
+    const doc=new PDFDocument({margin:30,size:'A4'});
+    const filename=`reporte_usuarios_${mes}.pdf`;
+    res.setHeader('Content-Type','application/pdf');
+    res.setHeader('Content-Disposition',`attachment; filename="${filename}"`);
+    doc.pipe(res);
+    doc.fontSize(18).text(`Reporte de Usuarios Registrados - ${mes}`,{align:'center'});doc.moveDown();
+    usuarios.forEach((u,idx)=>{
+       doc.fontSize(12).text(`${idx+1}. ${u.nombre} ${u.apellido} (${u.email}) - Rol: ${u.rol} - Registro: ${new Date(u.fechaRegistro).toLocaleDateString()}`);
+    });
+    if(usuarios.length===0) doc.fontSize(14).text('No hay usuarios registrados en este mes',{align:'center'});
+    doc.end();
+  }catch(err){console.error('Error generarReporteUsuarios',err);res.status(500).json({message:'Error al generar reporte'});}
+}
+
 module.exports = {
     renderDashboard,
     renderChangeRoleForm,
     changeUserRole,
     renderRoleSelector,
-    listUsers
+    listUsers,
+    renderReportesPage,
+    generarReporteCasos,
+    generarReporteAudiencias,
+    generarReporteUsuarios
 };

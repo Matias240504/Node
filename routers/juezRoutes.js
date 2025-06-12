@@ -19,4 +19,10 @@ router.post('/cambiarRol/:id', verifyToken, allowRoles('juez'), juezController.c
 // API paginada de usuarios
 router.get('/api/usuarios', verifyToken, allowRoles('juez'), juezController.listUsers);
 
+// Reportes
+router.get('/reportes', verifyViewToken, viewAllowRoles('juez'), juezController.renderReportesPage);
+router.get('/reportes/casos', verifyToken, allowRoles('juez'), juezController.generarReporteCasos);
+router.get('/reportes/audiencias', verifyToken, allowRoles('juez'), juezController.generarReporteAudiencias);
+router.get('/reportes/usuarios', verifyToken, allowRoles('juez'), juezController.generarReporteUsuarios);
+
 module.exports = router;
