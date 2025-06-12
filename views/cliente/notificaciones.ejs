@@ -24,7 +24,7 @@
    <div class="modal-content" style="max-width:600px;">
      <span id="closeModal" class="close">&times;</span>
      <h3 id="modalTitulo"></h3>
-     <pre id="modalDatos" style="white-space:pre-wrap;"></pre>
+     <div id="modalDatos" style="white-space:pre-wrap;"></div>
    </div>
  </div>
  <script>
@@ -36,14 +36,29 @@
    data.forEach(n=>{
      const div=document.createElement('div');
      div.className='notif'+(n.leido?' leida':'');
-     div.innerHTML=`<h4>${n.titulo}</h4><small>${new Date(n.fecha).toLocaleString()}</small>`;
+     let extra='';
+     if(n.tipo==='audiencia' && n.datos){
+        const fechaAud = n.datos.fecha? new Date(n.datos.fecha):null;
+        const fechaTexto = fechaAud? `${fechaAud.toLocaleDateString()} ${n.datos.hora||fechaAud.toLocaleTimeString()}`: new Date(n.fecha).toLocaleString();
+        extra=`<br><small>Sala: ${n.datos.sala||'N/A'} | Abogado: ${n.datos.abogado||'N/A'}</small>`;
+     }
+     const fechaMostrar = (n.tipo==='audiencia' && n.datos && n.datos.fecha)? `${new Date(n.datos.fecha).toLocaleDateString()} ${n.datos.hora||''}` : new Date(n.fecha).toLocaleString();
+     div.innerHTML=`<h4>${n.titulo}</h4><small>${fechaMostrar}</small>${extra}`;
      div.onclick=()=>mostrarDetalle(n);
      cont.appendChild(div);
    });
  }
  function mostrarDetalle(n){
    document.getElementById('modalTitulo').textContent=n.titulo;
-   document.getElementById('modalDatos').textContent=JSON.stringify(n.datos,null,2);
+   const detalle=document.getElementById('modalDatos');
+   if(n.tipo==='audiencia' && n.datos){
+      detalle.innerHTML=`<p><strong>Sala:</strong> ${n.datos.sala||'N/A'}</p>
+                         <p><strong>Abogado:</strong> ${n.datos.abogado||'N/A'}</p>
+                         <p><strong>Fecha:</strong> ${new Date(n.datos.fecha).toLocaleDateString()}</p>
+                         <p><strong>Hora:</strong> ${n.datos.hora||''}</p>`;
+   }else{
+      detalle.textContent=JSON.stringify(n.datos,null,2);
+   }
    document.getElementById('modal').style.display='block';
    fetch(`/cliente/api/notificaciones/${n._id}/leido`,{method:'PATCH'}).then(()=>cargar());
  }
